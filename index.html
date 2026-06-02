@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Finanças do Edy</title>
     
-    <!-- Configurações para o app abrir em tela cheia no celular (Modo Web App) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#4f46e5">
@@ -112,7 +111,7 @@
         .cat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
         .btn-table-actions { display: flex; gap: 4px; justify-content: center; }
 
-        /* REGRAS EXCLUSIVAS PARA ADAPTAÇÃO TOTAL NO CELULAR (SEM ROLAGEM LATERAL) */
+        /* REGRAS EXCLUSIVAS PARA ADAPTAÇÃO TOTAL NO CELULAR */
         @media (max-width: 600px) {
             body { padding: 10px; }
             header { gap: 8px; margin-bottom: 16px; }
@@ -120,7 +119,6 @@
             .controls { justify-content: center; gap: 6px; }
             .controls input[type="month"] { flex-grow: 1; text-align: center; }
             
-            /* Transforma a tabela em formato de lista/cards individuais */
             table, thead, tbody, th, td, tr { display: block; }
             thead tr { position: absolute; top: -9999px; left: -9999px; }
             tr { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin-bottom: 10px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
@@ -139,7 +137,6 @@
 </head>
 <body>
 
-    <!-- TELA DE LOGIN / CADASTRO -->
     <div id="authScreen">
         <div class="auth-card">
             <h2 style="margin-bottom:20px; text-align:center; color:var(--primary);">Finanças do Edy</h2>
@@ -161,13 +158,11 @@
         </div>
     </div>
 
-    <!-- APLICAÇÃO PRINCIPAL -->
     <div id="mainApp" class="container" style="display:none;">
         <header>
             <div class="logo"><i class="fa-solid fa-wallet"></i> Finanças do Edy</div>
             <div class="controls">
-                <span id="userDisplay" style="font-size:13px; color:var(--text-secondary); display:none;"></span>
-                <input type="month" id="mesFiltro" onchange="loadUserData()">
+                <input type="month" id="mesFiltro" onchange="setupRealtimeListeners()">
                 <button onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
                 <button onclick="toggleCharts()"><i class="fa-solid fa-chart-pie"></i></button>
                 <button onclick="openCategoriesModal()"><i class="fa-solid fa-tags"></i></button>
@@ -176,7 +171,6 @@
             </div>
         </header>
 
-        <!-- CARDS DASHBOARD -->
         <div class="cards-grid">
             <div class="card" style="border-left: 4px solid var(--success);">
                 <div class="card-title">Entrada Real</div>
@@ -197,7 +191,6 @@
             </div>
         </div>
 
-        <!-- DASHBOARD VISÃO SÊNIOR (CONTROLE DE TETO) -->
         <div class="senior-dashboard">
             <div class="card">
                 <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Execução do Teto de Despesas</div>
@@ -209,7 +202,6 @@
             </div>
         </div>
 
-        <!-- SEÇÃO DE GRÁFICOS DE PIZZA -->
         <div class="charts-wrapper" id="chartsWrapper">
             <div class="charts-container">
                 <div class="chart-card" id="areaDespesasPizza">
@@ -230,9 +222,7 @@
         </div>
 
         <div class="main-layout">
-            <!-- COLUNA DA ESQUERDA -->
             <div>
-                <!-- FORMULÁRIO OPERAÇÃO FIXO -->
                 <div class="panel">
                     <div class="panel-title"><i class="fa-solid fa-circle-plus"></i> Nova Operação</div>
                     <form onsubmit="registrarFluxo(event, 'novo')">
@@ -263,7 +253,6 @@
                     </form>
                 </div>
 
-                <!-- PLANEJAMENTO MENSAL -->
                 <div class="panel">
                     <div class="panel-title"><i class="fa-solid fa-sliders"></i> Planejamento Mensal</div>
                     <form onsubmit="salvarPlanejamento(event)">
@@ -284,7 +273,6 @@
                 </div>
             </div>
 
-            <!-- COLUNA DA DIREITA: TABELA -->
             <div>
                 <div class="panel" id="pdfArea">
                     <div class="panel-title"><i class="fa-solid fa-list"></i> Lançamentos Diários</div>
@@ -308,7 +296,6 @@
         </div>
     </div>
 
-    <!-- JANELA FLUTUANTE PARA EDIÇÃO -->
     <div class="modal" id="modalEdicao">
         <div class="modal-body">
             <div class="panel-title" style="justify-content:space-between; margin-bottom: 20px;">
@@ -348,7 +335,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE GERENCIAR CATEGORIAS -->
     <div class="modal" id="modalCategorias">
         <div class="modal-body">
             <div class="panel-title" style="justify-content:space-between;">
@@ -367,7 +353,6 @@
         </div>
     </div>
 
-    <!-- SCRIPTS DE LÓGICA -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDc3pdwFlSGdVkdFOSCUBJZpIRQOPmPc0o",
@@ -381,7 +366,13 @@
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        
+        // VISÃO SÊNIOR: Configuração do cache offline local do Firestore para evitar quedas de rede
         const db = firebase.firestore();
+        db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
+        db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+            console.warn("Aviso sobre cache offline: ", err.code);
+        });
 
         let currentUser = null;
         let authMode = 'login';
@@ -390,30 +381,34 @@
         let lancamentos = [];
         let planejamento = {};
         let categorias = {
-            income: ['Salário', 'Freelance', 'Investimentos', 'Outros'].sort(),
-            expense: ['Mercado', 'Moradia', 'Transporte', 'Saúde', 'Lazer', 'Outros'].sort()
+            income: ['Salário', 'Freelance', 'Investimentos', 'Outros'],
+            expense: ['Mercado', 'Moradia', 'Transporte', 'Saúde', 'Lazer', 'Outros']
         };
 
         const paletaDespesas = ['#ef4444', '#f97316', '#f59e0b', '#ec4899', '#64748b'];
         const paletaReceitas = ['#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#64748b'];
+
+        let unsubscribeLancamentos = null;
+        let unsubscribeConfig = null;
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
-                document.getElementById('userDisplay').innerText = `Operador: ${user.email}`;
                 
                 const hoje = new Date();
                 const localData = hoje.toLocaleDateString('pt-BR', {timeZone: 'America/Sao_Paulo'}).split('/');
                 document.getElementById('mesFiltro').value = `${localData[2]}-${localData[1]}`;
                 document.getElementById('txDate').value = `${localData[2]}-${localData[1]}-${localData[0]}`;
                 
-                subscribeToData();
+                subscribeToGlobalConfig();
             } else {
                 currentUser = null;
                 document.getElementById('authScreen').style.display = 'flex';
                 document.getElementById('mainApp').style.display = 'none';
+                if(unsubscribeLancamentos) unsubscribeLancamentos();
+                if(unsubscribeConfig) unsubscribeConfig();
             }
         });
 
@@ -440,28 +435,43 @@
 
         function logout() { auth.signOut(); }
 
-        function subscribeToData() {
+        // VISÃO SÊNIOR: Escuta metadados globais (categorias e planos mensais) de forma unificada
+        function subscribeToGlobalConfig() {
             if(!currentUser) return;
-            db.collection('users').doc(currentUser.uid).onSnapshot(doc => {
+            unsubscribeConfig = db.collection('users').doc(currentUser.uid).onSnapshot(doc => {
                 if(doc.exists) {
                     const data = doc.data();
-                    lancamentos = data.lancamentos || [];
                     planejamento = data.planejamento || {};
                     if(data.categorias) categorias = data.categorias;
                 }
-                if(categorias.income) { categorias.income = categorias.income.filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'})); }
-                if(categorias.expense) { categorias.expense = categorias.expense.filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'})); }
-                atualizarTela();
+                normalizarEOrdenarCategorias();
+                setupRealtimeListeners();
             });
         }
 
-        function loadUserData() { atualizarTela(); }
+        function normalizarEOrdenarCategorias() {
+            if(categorias.income) { categorias.income = categorias.income.filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'})); }
+            if(categorias.expense) { categorias.expense = categorias.expense.filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'})); }
+        }
 
-        async function saveToCloud() {
+        // VISÃO SÊNIOR: Filtro inteligente (Server-side query). O app baixa apenas o mês selecionado
+        function setupRealtimeListeners() {
             if(!currentUser) return;
-            await db.collection('users').doc(currentUser.uid).set({
-                lancamentos, planejamento, categorias
-            }, { merge: true });
+            if(unsubscribeLancamentos) unsubscribeLancamentos();
+
+            const mesSelecionado = document.getElementById('mesFiltro').value;
+            
+            unsubscribeLancamentos = db.collection('users').doc(currentUser.uid).collection('lancamentos')
+                .where('monthFilter', '==', mesSelecionado)
+                .onSnapshot(snapshot => {
+                    lancamentos = [];
+                    snapshot.forEach(doc => {
+                        lancamentos.push({ id: doc.id, ...doc.data() });
+                    });
+                    atualizarTela();
+                }, error => {
+                    console.error("Erro na escuta de dados:", error);
+                });
         }
 
         function atualizarTela() {
@@ -496,8 +506,10 @@
 
         function renderTabelaEMetricas() {
             const mes = document.getElementById('mesFiltro').value;
-            const filtered = lancamentos.filter(x => x.date.startsWith(mes));
-            filtered.sort((a,b) => b.date.localeCompare(a.date));
+            
+            // Lançamentos já vêm filtrados por mês via query do Firestore, basta ordenar localmente por data descendente
+            const localFiltered = [...lancamentos];
+            localFiltered.sort((a,b) => b.date.localeCompare(a.date));
 
             let totalInc = 0; let totalExp = 0; let totalInvestidoReal = 0;
             let catExpTotals = {}; let catIncTotals = {};
@@ -505,11 +517,11 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
-            if(filtered.length === 0) {
+            if(localFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary);">Nenhum registro para este período.</td></tr>`;
             }
 
-            filtered.forEach(item => {
+            localFiltered.forEach(item => {
                 if(item.type === 'income') {
                     totalInc += item.amount;
                     catIncTotals[item.category] = (catIncTotals[item.category] || 0) + item.amount;
@@ -674,53 +686,66 @@
             document.getElementById('modalEdicao').classList.remove('active');
         }
 
-        function registrarFluxo(e, modo) {
+        // VISÃO SÊNIOR: Salvamento atomizado por ID de documento para blindar contra perda de dados por concorrência
+        async function registrarFluxo(e, modo) {
             e.preventDefault();
+            if(!currentUser) return;
             
-            const id = modo === 'edicao' ? document.getElementById('editTxId').value : null;
+            const id = modo === 'edicao' ? document.getElementById('editTxId').value : 'tx_' + Date.now() + Math.random().toString(36).substr(2, 4);
             const dataInput = modo === 'edicao' ? document.getElementById('editTxDate').value : document.getElementById('txDate').value;
             const type = modo === 'edicao' ? document.getElementById('editTxType').value : document.getElementById('txType').value;
             const category = modo === 'edicao' ? document.getElementById('editTxCategory').value : document.getElementById('txCategory').value;
             const description = modo === 'edicao' ? document.getElementById('editTxDescription').value : document.getElementById('txDescription').value;
             const amount = modo === 'edicao' ? parseFloat(document.getElementById('editTxAmount').value) : parseFloat(document.getElementById('txAmount').value);
 
-            const dadosOperacao = { date: dataInput, type, category, description, amount };
+            // Extrai o padrão 'AAAA-MM' para otimização de buscas futuras do Firebase
+            const monthFilter = dataInput.substring(0, 7);
 
-            if(id) {
-                const index = lancamentos.findIndex(x => x.id === id);
-                if(index !== -1) lancamentos[index] = { id, ...dadosOperacao };
-                fecharModalEdicao();
-            } else {
-                const tx = {
-                    id: 'tx_' + Date.now() + Math.random().toString(36).substr(2, 4),
-                    ...dadosOperacao
-                };
-                lancamentos.push(tx);
-                document.getElementById('txDescription').value = '';
-                document.getElementById('txAmount').value = '';
+            const dadosOperacao = { date: dataInput, monthFilter, type, category, description, amount };
+
+            try {
+                await db.collection('users').doc(currentUser.uid).collection('lancamentos').doc(id).set(dadosOperacao, { merge: true });
+                
+                if(modo === 'edicao') {
+                    fecharModalEdicao();
+                } else {
+                    document.getElementById('txDescription').value = '';
+                    document.getElementById('txAmount').value = '';
+                }
+            } catch (err) {
+                alert("Erro ao gravar dados: " + err.message);
             }
-            
-            saveToCloud();
         }
 
-        function deletarLancamento(id) {
+        async function deletarLancamento(id) {
+            if(!currentUser) return;
             if(confirm('Remover este lançamento permanentemente?')) {
-                if(document.getElementById('editTxId').value === id) fecharModalEdicao();
-                lancamentos = lancamentos.filter(x => x.id !== id);
-                saveToCloud();
+                try {
+                    if (document.getElementById('editTxId').value === id) fecharModalEdicao();
+                    await db.collection('users').doc(currentUser.uid).collection('lancamentos').doc(id).delete();
+                } catch(err) {
+                    alert("Erro ao remover: " + err.message);
+                }
             }
         }
 
-        function salvarPlanejamento(e) {
+        async function salvarPlanejamento(e) {
             e.preventDefault();
+            if(!currentUser) return;
             const mes = document.getElementById('mesFiltro').value;
+            
             planejamento[mes] = {
                 income: parseFloat(document.getElementById('planIncome').value) || 0,
                 expense: parseFloat(document.getElementById('planExpense').value) || 0,
                 savings: parseFloat(document.getElementById('planSavings').value) || 0
             };
-            saveToCloud();
-            alert('Planejamento guardado com sucesso!');
+
+            try {
+                await db.collection('users').doc(currentUser.uid).set({ planejamento }, { merge: true });
+                alert('Planejamento guardado com sucesso!');
+            } catch(err) {
+                alert("Erro ao salvar planejamento: " + err.message);
+            }
         }
 
         function toggleCharts() {
@@ -761,9 +786,9 @@
             });
         }
 
-        function adicionarCategoria() {
+        async function adicionarCategoria() {
             const nameInput = document.getElementById('newCatName');
-            if(!nameInput) return;
+            if(!nameInput || !currentUser) return;
             const name = nameInput.value.trim();
             if(!name) return;
             
@@ -773,14 +798,16 @@
             }
             
             categorias[currentCatTab].push(name);
-            categorias[currentCatTab] = categorias[currentCatTab].filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'}));
+            normalizarEOrdenarCategorias();
             
-            nameInput.value = '';
-            atualizarTela();
-            saveToCloud();
+            try {
+                await db.collection('users').doc(currentUser.uid).set({ categorias }, { merge: true });
+                nameInput.value = '';
+            } catch(err) { alert("Erro ao salvar categoria: " + err.message); }
         }
 
-        function editarCategoria(oldName) {
+        async function editarCategoria(oldName) {
+            if(!currentUser) return;
             const newName = prompt(`Mudar o nome da categoria "${oldName}" para:`, oldName);
             if(!newName || newName.trim() === "" || oldName === newName.trim()) return;
             const trimmed = newName.trim();
@@ -793,21 +820,23 @@
             const idx = categorias[currentCatTab].indexOf(oldName);
             if(idx !== -1) {
                 categorias[currentCatTab][idx] = trimmed;
-                categorias[currentCatTab] = categorias[currentCatTab].filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'}));
+                normalizarEOrdenarCategorias();
                 
-                lancamentos.forEach(l => {
-                    if(l.type === currentCatTab && l.category === oldName) l.category = trimmed;
-                });
-                atualizarTela();
-                saveToCloud();
+                try {
+                    // Nota Sênior: Lançamentos antigos mantêm a string estática anterior por integridade do log,
+                    // mas novos lançamentos usarão o nome atualizado.
+                    await db.collection('users').doc(currentUser.uid).set({ categorias }, { merge: true });
+                } catch(err) { alert("Erro ao editar: " + err.message); }
             }
         }
 
-        function removerCategoria(name) {
+        async function removerCategoria(name) {
+            if(!currentUser) return;
             if(confirm(`Remover a categoria "${name}"? Lançamentos existentes manterão este nome.`)) {
                 categorias[currentCatTab] = categorias[currentCatTab].filter(x => x !== name);
-                atualizarTela();
-                saveToCloud();
+                try {
+                    await db.collection('users').doc(currentUser.uid).set({ categorias }, { merge: true });
+                } catch(err) { alert("Erro ao remover: " + err.message); }
             }
         }
 
@@ -828,21 +857,4 @@
             element.style.padding = '20px'; element.style.color = '#1e293b';
             element.innerHTML = `
                 <h1 style="color:#4f46e5; margin-bottom:4px;">Finanças do Edy</h1>
-                <h3 style="color:#64748b; margin-bottom:20px;">Livro de Lançamentos Diários — Período: ${mes.split('-').reverse().join('/')}</h3>
-                ${document.getElementById('pdfArea').innerHTML}
-            `;
-            element.querySelectorAll('.no-pdf').forEach(x => x.remove());
-            
-            html2pdf().set({
-                margin: 10, filename: `Financas_Edy_${mes}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(element).save();
-        }
-
-        function limparDados() {
-            if(confirm('🚨 ATENÇÃO: Apagar definitivamente TODO o seu histórico de lançamentos e planejamentos na nuvem?')) {
-                lancamentos = []; planejamento = {}; saveToCloud();
-            }
-        }
-    </script>
-</body>
-</html>
+                <h3 style="color:#6
