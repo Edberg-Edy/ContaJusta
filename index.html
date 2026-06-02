@@ -51,23 +51,28 @@
         .card-title { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
         .card-value { font-size: 24px; font-weight: bold; }
 
-        /* Dashboard Sênior */
         .senior-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
         @media(max-width: 768px) { .senior-dashboard { grid-template-columns: 1fr; } }
         .progress-bar-container { background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
         .progress-bar { height: 100%; transition: width 0.4s ease; }
 
-        /* Painel Ocultável de Gráficos Minimalistas */
         .charts-wrapper { display: block; margin-bottom: 24px; transition: all 0.3s ease; }
         .charts-wrapper.collapsed { display: none; }
         .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media(max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
-        .chart-card { background: var(--surface); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
-        .chart-row { display: flex; align-items: center; margin-bottom: 6px; gap: 8px; }
-        .chart-label { width: 90px; font-size: 11px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; font-weight: 600; color: var(--text-secondary); }
-        .chart-bar-wrapper { flex: 1; background: var(--border); height: 14px; border-radius: 4px; overflow: hidden; position: relative; }
-        .chart-bar { height: 100%; width: 0%; transition: width 0.5s ease; }
-        .chart-value-inline { position: absolute; right: 6px; top: 0px; font-size: 9px; font-weight: bold; color: #1e293b; line-height: 14px; z-index: 2; }
+        .chart-card { background: var(--surface); padding: 18px; border-radius: var(--radius); border: 1px solid var(--border); }
+        
+        .pie-layout { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 10px 0; }
+        @media(max-width: 480px) { .pie-layout { flex-direction: column; gap: 16px; } }
+        
+        .pie-circle { width: 120px; height: 120px; border-radius: 50%; background: var(--border); position: relative; flex-shrink: 0; box-shadow: inset 0 0 0 20px var(--surface); }
+        
+        .pie-legend { flex: 1; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 500; }
+        .legend-left { display: flex; align-items: center; gap: 6px; max-width: 130px; }
+        .legend-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+        .legend-name { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: var(--text); }
+        .legend-val { font-weight: bold; color: var(--text-secondary); text-align: right; }
 
         .main-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
         @media(max-width: 768px) { .main-layout { grid-template-columns: 1fr; } }
@@ -93,19 +98,18 @@
         .auth-tab { flex: 1; border: none; background: transparent; padding: 8px; font-weight: 600; color: var(--text-secondary); }
         .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); border-radius: 0; }
 
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
+        /* Estilização Geral de Modais */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
         .modal.active { display: flex; }
-        .modal-body { background: var(--surface); padding: 24px; border-radius: var(--radius); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-body { background: var(--surface); padding: 24px; border-radius: var(--radius); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); position: relative; }
 
         .cat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
         .btn-table-actions { display: flex; gap: 4px; justify-content: center; }
     </style>
 
-    <!-- Scripts do Firebase v9 (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <!-- Script PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
@@ -140,7 +144,7 @@
                 <span id="userDisplay" style="font-size:13px; color:var(--text-secondary);"></span>
                 <input type="month" id="mesFiltro" onchange="loadUserData()">
                 <button onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
-                <button onclick="toggleCharts()"><i class="fa-solid fa-chart-simple"></i> Gráficos</button>
+                <button onclick="toggleCharts()"><i class="fa-solid fa-chart-pie"></i> Gráficos</button>
                 <button onclick="openCategoriesModal()"><i class="fa-solid fa-tags"></i> Categorias</button>
                 <button class="btn-p" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf"></i> Baixar PDF</button>
                 <button class="btn-d" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
@@ -186,16 +190,22 @@
             </div>
         </div>
 
-        <!-- SEÇÃO DE GRÁFICOS ANTI-POLUIÇÃO (MÁXIMO 5 BARRAS FIXAS) -->
+        <!-- SEÇÃO DE GRÁFICOS DE PIZZA -->
         <div class="charts-wrapper" id="chartsWrapper">
             <div class="charts-container">
-                <div class="chart-card">
-                    <div class="panel-title" style="font-size:13px; margin-bottom:12px; color:var(--text);"><i class="fa-solid fa-chart-pie"></i> Top 4 Despesas + Outros</div>
-                    <div id="chartExpensesArea"></div>
+                <div class="chart-card" id="areaDespesasPizza">
+                    <div class="panel-title" style="font-size:14px; margin-bottom:5px; color:var(--text);"><i class="fa-solid fa-chart-pie"></i> Proporção de Despesas</div>
+                    <div class="pie-layout">
+                        <div class="pie-circle" id="pieExpenseCircle"></div>
+                        <div class="pie-legend" id="pieExpenseLegend"></div>
+                    </div>
                 </div>
-                <div class="chart-card">
-                    <div class="panel-title" style="font-size:13px; margin-bottom:12px; color:var(--text);"><i class="fa-solid fa-chart-bar"></i> Top 4 Receitas + Outros</div>
-                    <div id="chartIncomesArea"></div>
+                <div class="chart-card" id="areaReceitasPizza">
+                    <div class="panel-title" style="font-size:14px; margin-bottom:5px; color:var(--text);"><i class="fa-solid fa-chart-pie"></i> Origem de Receitas</div>
+                    <div class="pie-layout">
+                        <div class="pie-circle" id="pieIncomeCircle"></div>
+                        <div class="pie-legend" id="pieIncomeLegend"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -203,18 +213,17 @@
         <div class="main-layout">
             <!-- COLUNA DA ESQUERDA -->
             <div>
-                <!-- FORMULÁRIO OPERAÇÃO -->
+                <!-- FORMULÁRIO OPERAÇÃO FIXO (PARA NOVOS LANÇAMENTOS) -->
                 <div class="panel">
-                    <div class="panel-title" id="formTitle"><i class="fa-solid fa-circle-plus"></i> Nova Operação</div>
-                    <form onsubmit="registrarFluxo(event)">
-                        <input type="hidden" id="txId"> <!-- Controle de Edição -->
+                    <div class="panel-title"><i class="fa-solid fa-circle-plus"></i> Nova Operação</div>
+                    <form onsubmit="registrarFluxo(event, 'novo')">
                         <div class="form-group">
                             <label>Data</label>
                             <input type="date" id="txDate" required>
                         </div>
                         <div class="form-group">
                             <label>Natureza</label>
-                            <select id="txType" onchange="atualizarSeletoresForm()" required>
+                            <select id="txType" onchange="atualizarSeletoresForm('novo')" required>
                                 <option value="expense">Despesa</option>
                                 <option value="income">Receita</option>
                             </select>
@@ -231,8 +240,7 @@
                             <label>Valor</label>
                             <input type="number" step="0.01" id="txAmount" required placeholder="0,00">
                         </div>
-                        <button type="submit" class="btn-s" id="btnFormSubmit" style="width:100%;">Registrar</button>
-                        <button type="button" class="btn-d" id="btnFormCancel" style="width:100%; margin-top: 8px; display: none;" onclick="cancelarEdicao()">Cancelar Edição</button>
+                        <button type="submit" class="btn-s" style="width:100%;">Registrar</button>
                     </form>
                 </div>
 
@@ -281,6 +289,46 @@
         </div>
     </div>
 
+    <!-- WINDOW MODAL: JANELA FLUTUANTE PARA EDIÇÃO -->
+    <div class="modal" id="modalEdicao">
+        <div class="modal-body">
+            <div class="panel-title" style="justify-content:space-between; margin-bottom: 20px;">
+                <span><i class="fa-solid fa-pen-to-square" style="color:var(--primary);"></i> Editar Registro</span>
+                <button onclick="fecharModalEdicao()" style="background:none; border:none; font-size:22px; padding:0; line-height:1; color:var(--text-secondary);">&times;</button>
+            </div>
+            <form onsubmit="registrarFluxo(event, 'edicao')">
+                <input type="hidden" id="editTxId">
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="editTxDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Natureza</label>
+                    <select id="editTxType" onchange="atualizarSeletoresForm('edicao')" required>
+                        <option value="expense">Despesa</option>
+                        <option value="income">Receita</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="editTxCategory" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <input type="text" id="editTxDescription" required placeholder="Descrição...">
+                </div>
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" step="0.01" id="editTxAmount" required placeholder="0,00">
+                </div>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button type="button" class="btn-d" style="flex:1;" onclick="fecharModalEdicao()">Descartar</button>
+                    <button type="submit" class="btn-p" style="flex:2;">Salvar Alteração</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL DE GERENCIAR CATEGORIAS -->
     <div class="modal" id="modalCategorias">
         <div class="modal-body">
@@ -300,7 +348,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE LÓGICA INTEGRADA -->
+    <!-- SCRIPTS DE LÓGICA -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDc3pdwFlSGdVkdFOSCUBJZpIRQOPmPc0o",
@@ -327,6 +375,9 @@
             expense: ['Mercado', 'Moradia', 'Transporte', 'Saúde', 'Lazer', 'Outros'].sort()
         };
 
+        const paletaDespesas = ['#ef4444', '#f97316', '#f59e0b', '#ec4899', '#64748b'];
+        const paletaReceitas = ['#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#64748b'];
+
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
@@ -336,12 +387,8 @@
                 
                 const hoje = new Date();
                 const localData = hoje.toLocaleDateString('pt-BR', {timeZone: 'America/Sao_Paulo'}).split('/');
-                const anoStr = localData[2];
-                const mesStr = localData[1];
-                const diaStr = localData[0];
-
-                document.getElementById('mesFiltro').value = `${anoStr}-${mesStr}`;
-                document.getElementById('txDate').value = `${anoStr}-${mesStr}-${diaStr}`;
+                document.getElementById('mesFiltro').value = `${localData[2]}-${localData[1]}`;
+                document.getElementById('txDate').value = `${localData[2]}-${localData[1]}-${localData[0]}`;
                 
                 subscribeToData();
             } else {
@@ -369,9 +416,7 @@
                     await auth.createUserWithEmailAndPassword(email, password);
                     alert('Conta criada com sucesso!');
                 }
-            } catch (err) {
-                alert('Erro na operação: ' + err.message);
-            }
+            } catch (err) { alert('Erro na operação: ' + err.message); }
         }
 
         function logout() { auth.signOut(); }
@@ -383,20 +428,15 @@
                     const data = doc.data();
                     lancamentos = data.lancamentos || [];
                     planejamento = data.planejamento || {};
-                    if(data.categorias) {
-                        categorias = data.categorias;
-                    }
+                    if(data.categorias) categorias = data.categorias;
                 }
                 if(categorias.income) categorias.income.sort();
                 if(categorias.expense) categorias.expense.sort();
-                
                 atualizarTela();
             });
         }
 
-        async function loadUserData() {
-            atualizarTela();
-        }
+        function loadUserData() { atualizarTela(); }
 
         async function saveToCloud() {
             if(!currentUser) return;
@@ -406,34 +446,39 @@
         }
 
         function atualizarTela() {
-            atualizarSeletoresForm();
+            atualizarSeletoresForm('novo');
+            atualizarSeletoresForm('edicao');
             renderTabelaEMetricas();
             if(document.getElementById('modalCategorias').classList.contains('active')) {
                 renderCategoriesModalList();
             }
         }
 
-        function atualizarSeletoresForm() {
-            const type = document.getElementById('txType').value;
-            const select = document.getElementById('txCategory');
-            if(!select) return;
+        // Atualiza dinamicamente as categorias de acordo com o escopo (novo ou edição)
+        function atualizarSeletoresForm(prefixo) {
+            const idTipo = prefixo === 'edicao' ? 'editTxType' : 'txType';
+            const idCat = prefixo === 'edicao' ? 'editTxCategory' : 'txCategory';
+            
+            const elementoTipo = document.getElementById(idTipo);
+            const select = document.getElementById(idCat);
+            if(!elementoTipo || !select) return;
+
+            const type = elementoTipo.value;
             const valorSelecionadoAntes = select.value;
             select.innerHTML = '';
+            
             const list = categorias[type] || [];
             list.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c; opt.innerText = c;
                 select.appendChild(opt);
             });
-            if(list.includes(valorSelecionadoAntes)) {
-                select.value = valorSelecionadoAntes;
-            }
+            if(list.includes(valorSelecionadoAntes)) select.value = valorSelecionadoAntes;
         }
 
         function renderTabelaEMetricas() {
             const mes = document.getElementById('mesFiltro').value;
             const filtered = lancamentos.filter(x => x.date.startsWith(mes));
-            
             filtered.sort((a,b) => b.date.localeCompare(a.date));
 
             let totalInc = 0; let totalExp = 0;
@@ -500,7 +545,6 @@
             if (tetoDefinido > 0) {
                 const pctTeto = (totalExp / tetoDefinido) * 100;
                 document.getElementById('seniorTetoTxt').innerText = `${pctTeto.toFixed(1)}% (${formatarMoeda(totalExp)} de ${formatarMoeda(tetoDefinido)})`;
-                
                 const barraTeto = document.getElementById('seniorTetoBar');
                 barraTeto.style.width = `${Math.min(100, pctTeto)}%`;
 
@@ -525,132 +569,124 @@
                 document.getElementById('seniorTetoAviso').style.color = 'var(--text-secondary)';
             }
 
-            renderGraficoAntiPoluicao('chartExpensesArea', catExpTotals, totalExp, '#ef4444');
-            renderGraficoAntiPoluicao('chartIncomesArea', catIncTotals, totalInc, '#10b981');
+            renderGraficoPizza('pieExpenseCircle', 'pieExpenseLegend', catExpTotals, totalExp, paletaDespesas);
+            renderGraficoPizza('pieIncomeCircle', 'pieIncomeLegend', catIncTotals, totalInc, paletaReceitas);
         }
 
-        // LÓGICA DE AGRUPAMENTO TOP 4 + "OUTROS"
-        function renderGraficoAntiPoluicao(containerId, dataObj, totalGeral, corBarra) {
-            const area = document.getElementById(containerId);
-            area.innerHTML = '';
-            
-            // Remove categorias com valor zero
+        function renderGraficoPizza(circleId, legendId, dataObj, totalGeral, paletaCores) {
+            const circulo = document.getElementById(circleId);
+            const legenda = document.getElementById(legendId);
+            circulo.innerHTML = ''; legenda.innerHTML = '';
             const chaves = Object.keys(dataObj).filter(k => dataObj[k] > 0);
 
-            if(chaves.length === 0) {
-                area.innerHTML = `<div style="font-size:11px; color:var(--text-secondary); text-align:center; padding: 15px 0;">Sem movimentações neste período.</div>`;
+            if(chaves.length === 0 || totalGeral === 0) {
+                circulo.style.background = 'var(--border)';
+                legenda.innerHTML = `<div style="font-size:12px; color:var(--text-secondary); padding: 10px 0;">Sem movimentações registradas.</div>`;
                 return;
             }
 
-            // Ordena do maior valor para o menor
             chaves.sort((a,b) => dataObj[b] - dataObj[a]);
-
-            // Separa as top 4 e calcula o resto para virar "Outros"
             const topCategorias = chaves.slice(0, 4);
             const restoCategorias = chaves.slice(4);
 
             let dadosFinais = [];
-            
-            // Adiciona as top 4
-            topCategorias.forEach(cat => {
-                dadosFinais.push({ name: cat, value: dataObj[cat] });
-            });
-
-            // Se sobrou mais categorias, agrupa tudo em "Outras Categorias"
+            topCategorias.forEach(cat => dadosFinais.push({ name: cat, value: dataObj[cat] }));
             if(restoCategorias.length > 0) {
                 let somaResto = 0;
-                restoCategorias.forEach(cat => { somaResto += dataObj[cat]; });
-                dadosFinais.push({ name: "Outras", value: somaResto });
+                restoCategorias.forEach(cat => somaResto += dataObj[cat]);
+                dadosFinais.push({ name: "Outros", value: somaResto });
             }
 
-            // Renderiza o gráfico limitado a no máximo 5 linhas estáveis
-            dadosFinais.forEach(item => {
-                const pct = totalGeral > 0 ? (item.value / totalGeral) * 100 : 0;
+            let acumuladoPercent = 0; let gradientParts = [];
+            dadosFinais.forEach((item, index) => {
+                const cor = paletaCores[index] || '#64748b';
+                const pct = (item.value / totalGeral) * 100;
+                const deGraus = (acumuladoPercent * 3.6).toFixed(1);
+                acumuladoPercent += pct;
+                const ateGraus = (acumuladoPercent * 3.6).toFixed(1);
+                gradientParts.push(`${cor} ${deGraus}deg ${ateGraus}deg`);
 
-                const row = document.createElement('div');
-                row.className = 'chart-row';
-                row.innerHTML = `
-                    <div class="chart-label" title="${item.name}">${item.name}</div>
-                    <div class="chart-bar-wrapper">
-                        <div class="chart-bar" style="width: ${pct.toFixed(1)}%; background-color: ${corBarra};"></div>
-                        <div class="chart-value-inline">${formatarMoeda(item.value)} (${pct.toFixed(0)}%)</div>
+                const itemLegenda = document.createElement('div');
+                itemLegenda.className = 'legend-item';
+                itemLegenda.innerHTML = `
+                    <div class="legend-left">
+                        <div class="legend-color" style="background:${cor}"></div>
+                        <div class="legend-name" title="${item.name}">${item.name}</div>
                     </div>
+                    <div class="legend-val">${pct.toFixed(0)}%</div>
                 `;
-                area.appendChild(row);
+                legenda.appendChild(itemLegenda);
             });
+
+            circulo.style.background = `conic-gradient(${gradientParts.join(', ')})`;
+            const miolo = document.createElement('div');
+            miolo.style.position = 'absolute'; miolo.style.inset = '22px'; miolo.style.borderRadius = '50%'; miolo.style.backgroundColor = 'var(--surface)';
+            circulo.appendChild(miolo);
         }
 
         function formatarMoeda(v) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
         }
 
+        // GATILHO PARA ABRIR A JANELA FLUTUANTE DE EDIÇÃO
         function prepararEdicao(id) {
             const item = lancamentos.find(x => x.id === id);
             if(!item) return;
 
-            document.getElementById('txId').value = item.id;
-            document.getElementById('txDate').value = item.date;
-            document.getElementById('txType').value = item.type;
+            document.getElementById('editTxId').value = item.id;
+            document.getElementById('editTxDate').value = item.date;
+            document.getElementById('editTxType').value = item.type;
             
-            atualizarSeletoresForm();
-            document.getElementById('txCategory').value = item.category;
-            document.getElementById('txDescription').value = item.description;
-            document.getElementById('txAmount').value = item.amount;
+            atualizarSeletoresForm('edicao');
+            document.getElementById('editTxCategory').value = item.category;
+            document.getElementById('editTxDescription').value = item.description;
+            document.getElementById('editTxAmount').value = item.amount;
 
-            document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Editar Operação`;
-            document.getElementById('btnFormSubmit').innerText = "Atualizar Lançamento";
-            document.getElementById('btnFormSubmit').className = "btn-p";
-            document.getElementById('btnFormCancel').style.display = "block";
-            
-            document.getElementById('formTitle').scrollIntoView({ behavior: 'smooth' });
+            // Mostra o Modal Centralizado na tela
+            document.getElementById('modalEdicao').classList.add('active');
         }
 
-        function cancelarEdicao() {
-            document.getElementById('txId').value = '';
-            document.getElementById('txDescription').value = '';
-            document.getElementById('txAmount').value = '';
-            
-            document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-circle-plus"></i> Nova Operação`;
-            document.getElementById('btnFormSubmit').innerText = "Registrar";
-            document.getElementById('btnFormSubmit').className = "btn-s";
-            document.getElementById('btnFormCancel').style.display = "none";
+        function fecharModalEdicao() {
+            document.getElementById('modalEdicao').classList.remove('active');
         }
 
-        function registrarFluxo(e) {
+        function registrarFluxo(e, modo) {
             e.preventDefault();
-            const txId = document.getElementById('txId').value;
-            const dataInput = document.getElementById('txDate').value;
+            
+            // Define de quais inputs ler baseado em onde veio o envio (do painel fixo ou do modal flutuante)
+            const id = modo === 'edicao' ? document.getElementById('editTxId').value : null;
+            const dataInput = modo === 'edicao' ? document.getElementById('editTxDate').value : document.getElementById('txDate').value;
+            const type = modo === 'edicao' ? document.getElementById('editTxType').value : document.getElementById('txType').value;
+            const category = modo === 'edicao' ? document.getElementById('editTxCategory').value : document.getElementById('txCategory').value;
+            const description = modo === 'edicao' ? document.getElementById('editTxDescription').value : document.getElementById('txDescription').value;
+            const amount = modo === 'edicao' ? parseFloat(document.getElementById('editTxAmount').value) : parseFloat(document.getElementById('txAmount').value);
 
-            const novaOperacao = {
-                date: dataInput,
-                type: document.getElementById('txType').value,
-                category: document.getElementById('txCategory').value,
-                description: document.getElementById('txDescription').value,
-                amount: parseFloat(document.getElementById('txAmount').value)
-            };
+            const dadosOperacao = { date: dataInput, type, category, description, amount };
 
-            if(txId) {
-                const index = lancamentos.findIndex(x => x.id === txId);
-                if(index !== -1) {
-                    lancamentos[index] = { id: txId, ...novaOperacao };
-                }
-                cancelarEdicao();
+            if(id) {
+                // Modo Edição
+                const index = lancamentos.findIndex(x => x.id === id);
+                if(index !== -1) lancamentos[index] = { id, ...dadosOperacao };
+                fecharModalEdicao();
             } else {
+                // Modo Novo Lançamento
                 const tx = {
                     id: 'tx_' + Date.now() + Math.random().toString(36).substr(2, 4),
-                    ...novaOperacao
+                    ...dadosOperacao
                 };
                 lancamentos.push(tx);
+                
+                // Limpa apenas o formulário fixo da esquerda
+                document.getElementById('txDescription').value = '';
+                document.getElementById('txAmount').value = '';
             }
             
             saveToCloud();
-            document.getElementById('txDescription').value = '';
-            document.getElementById('txAmount').value = '';
         }
 
         function deletarLancamento(id) {
             if(confirm('Remover este lançamento permanentemente?')) {
-                if(document.getElementById('txId').value === id) cancelarEdicao();
+                if(document.getElementById('editTxId').value === id) fecharModalEdicao();
                 lancamentos = lancamentos.filter(x => x.id !== id);
                 saveToCloud();
             }
@@ -671,20 +707,15 @@
         function toggleCharts() {
             const wrapper = document.getElementById('chartsWrapper');
             wrapper.classList.toggle('collapsed');
-            const isCollapsed = wrapper.classList.contains('collapsed');
-            localStorage.setItem('edy_charts_collapsed', isCollapsed ? 'yes' : 'no');
+            localStorage.setItem('edy_charts_collapsed', wrapper.classList.contains('collapsed') ? 'yes' : 'no');
         }
-        if(localStorage.getItem('edy_charts_collapsed') === 'yes') {
-            document.getElementById('chartsWrapper').classList.add('collapsed');
-        }
+        if(localStorage.getItem('edy_charts_collapsed') === 'yes') document.getElementById('chartsWrapper').classList.add('collapsed');
 
         function openCategoriesModal() {
             document.getElementById('modalCategorias').classList.add('active');
             renderCategoriesModalList();
         }
-        function closeCategoriesModal() {
-            document.getElementById('modalCategorias').classList.remove('active');
-        }
+        function closeCategoriesModal() { document.getElementById('modalCategorias').classList.remove('active'); }
         function switchCatTab(tab) {
             currentCatTab = tab;
             document.getElementById('tabCatExpense').classList.toggle('active', tab === 'expense');
@@ -694,8 +725,7 @@
 
         function renderCategoriesModalList() {
             const listArea = document.getElementById('modalCategoriesList');
-            if(!listArea) return;
-            listArea.innerHTML = '';
+            if(!listArea) return; listArea.innerHTML = '';
             const list = categorias[currentCatTab] || [];
             
             list.forEach(cat => {
@@ -718,7 +748,6 @@
             const name = nameInput.value.trim();
             if(!name) return;
             if(categorias[currentCatTab].includes(name)) { alert('Esta categoria já existe!'); return; }
-            
             categorias[currentCatTab].push(name);
             categorias[currentCatTab].sort(); 
             nameInput.value = '';
@@ -729,14 +758,12 @@
             const newName = prompt(`Mudar o nome da categoria "${oldName}" para:`, oldName);
             if(!newName || newName.trim() === "" || oldName === newName.trim()) return;
             const trimmed = newName.trim();
-
             if(categorias[currentCatTab].includes(trimmed)) { alert('Uma categoria com este nome já existe!'); return; }
             
             const idx = categorias[currentCatTab].indexOf(oldName);
             if(idx !== -1) {
                 categorias[currentCatTab][idx] = trimmed;
                 categorias[currentCatTab].sort();
-
                 lancamentos.forEach(l => {
                     if(l.type === currentCatTab && l.category === oldName) l.category = trimmed;
                 });
@@ -757,16 +784,16 @@
         }
         if(localStorage.getItem('edy_theme') === 'dark') document.body.classList.add('dark');
 
+        // Fechar modais ao clicar fora da área deles
         document.addEventListener("click", function(e) {
-            const modal = document.getElementById('modalCategorias');
-            if (e.target === modal) closeCategoriesModal();
+            if (e.target === document.getElementById('modalCategorias')) closeCategoriesModal();
+            if (e.target === document.getElementById('modalEdicao')) fecharModalEdicao();
         });
 
         function exportarPDF() {
             const mes = document.getElementById('mesFiltro').value;
             const element = document.createElement('div');
-            element.style.padding = '20px';
-            element.style.color = '#1e293b';
+            element.style.padding = '20px'; element.style.color = '#1e293b';
             element.innerHTML = `
                 <h1 style="color:#4f46e5; margin-bottom:4px;">Finanças do Edy</h1>
                 <h3 style="color:#64748b; margin-bottom:20px;">Livro de Lançamentos Diários — Período: ${mes.split('-').reverse().join('/')}</h3>
@@ -775,10 +802,7 @@
             element.querySelectorAll('.no-pdf').forEach(x => x.remove());
             
             html2pdf().set({
-                margin: 10,
-                filename: `Financas_Edy_${mes}.pdf`,
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                margin: 10, filename: `Financas_Edy_${mes}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).from(element).save();
         }
 
