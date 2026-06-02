@@ -301,7 +301,7 @@
             authMode = mode;
             document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
             document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
-            document.getElementById('btnAuthSubmit').innerText = mode === 'login' ? 'Entrar no Panel' : 'Registrar Credenciais';
+            document.getElementById('btnAuthSubmit').innerText = mode === 'login' ? 'Entrar no Painel' : 'Registrar Credenciais';
         }
 
         async function handleAuth(e) {
@@ -343,7 +343,6 @@
         }
 
         async function loadUserData() {
-            // Recarrega a tela com base na alteração do filtro de mês
             atualizarTela();
         }
 
@@ -358,7 +357,7 @@
             atualizarSeletoresForm();
             renderTabelaEMetricas();
             if(document.getElementById('modalCategorias').classList.contains('active')) {
-                renderCategoriasModalList();
+                renderCategoriesModalList();
             }
         }
 
@@ -394,9 +393,13 @@
                 if(item.type === 'income') totalInc += item.amount;
                 else totalExp += item.amount;
 
+                // CORREÇÃO DE DATA: Evita problemas dividindo a string AAAA-MM-DD e remontando
+                const partesData = item.date.split('-');
+                const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : item.date;
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${item.date.split('-').reverse().join('/')}</td>
+                    <td>${dataFormatada}</td>
                     <td><strong>${item.description}</strong></td>
                     <td><span class="badge ${item.type === 'income' ? 'inc' : 'exp'}">${item.category}</span></td>
                     <td style="text-align:right; font-weight:700; color:var(--${item.type === 'income' ? 'success' : 'danger'})">
@@ -432,9 +435,13 @@
         // Operações de Lançamentos
         function registrarFluxo(e) {
             e.preventDefault();
+            
+            // CORREÇÃO DE INPUT: Salva estritamente o valor em texto puro escolhido pelo usuário
+            const dataInput = document.getElementById('txDate').value;
+
             const tx = {
                 id: 'tx_' + Date.now() + Math.random().toString(36).substr(2, 4),
-                date: document.getElementById('txDate').value,
+                date: dataInput,
                 type: document.getElementById('txType').value,
                 category: document.getElementById('txCategory').value,
                 description: document.getElementById('txDescription').value,
@@ -508,7 +515,7 @@
             if(categorias[currentCatTab].includes(name)) { alert('Esta categoria já existe!'); return; }
             
             categorias[currentCatTab].push(name);
-            categorias[currentCatTab].sort(); // Força a Ordem Alfabética (A-Z)
+            categorias[currentCatTab].sort(); 
             nameInput.value = '';
             saveToCloud();
         }
@@ -520,13 +527,11 @@
 
             if(categorias[currentCatTab].includes(trimmed)) { alert('Uma categoria com este nome já existe!'); return; }
             
-            // Altera na lista e ordena de A-Z
             const idx = categorias[currentCatTab].indexOf(oldName);
             if(idx !== -1) {
                 categorias[currentCatTab][idx] = trimmed;
                 categorias[currentCatTab].sort();
 
-                // Corrige lançamentos antigos retrospectivamente
                 lancamentos.forEach(l => {
                     if(l.type === currentCatTab && l.category === oldName) l.category = trimmed;
                 });
@@ -558,7 +563,6 @@
                 <h3 style="color:#64748b; margin-bottom:20px;">Livro de Lançamentos Diários — Período: ${mes.split('-').reverse().join('/')}</h3>
                 ${document.getElementById('pdfArea').innerHTML}
             `;
-            // Limpa botões de ações para não saírem no papel
             element.querySelectorAll('.no-pdf').forEach(x => x.remove());
             
             html2pdf().set({
