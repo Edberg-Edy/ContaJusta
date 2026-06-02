@@ -51,11 +51,21 @@
         .card-title { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
         .card-value { font-size: 24px; font-weight: bold; }
 
-        /* Estilos do Dashboard Sênior */
+        /* Dashboard Sênior */
         .senior-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
         @media(max-width: 768px) { .senior-dashboard { grid-template-columns: 1fr; } }
         .progress-bar-container { background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
-        .progress-bar { height: 100%; transition: width 0.4s ease, background-color 0.3s; }
+        .progress-bar { height: 100%; transition: width 0.4s ease; }
+
+        /* Gráficos Visão Sênior */
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        @media(max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
+        .chart-card { background: var(--surface); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); }
+        .chart-row { display: flex; align-items: center; margin-bottom: 12px; gap: 12px; }
+        .chart-label { width: 110px; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+        .chart-bar-wrapper { flex: 1; background: var(--border); height: 20px; border-radius: 4px; overflow: hidden; position: relative; }
+        .chart-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.5s ease; }
+        .chart-value-inline { position: absolute; right: 8px; top: 1px; font-size: 11px; font-weight: bold; color: #1e293b; z-index: 2; }
 
         .main-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
         @media(max-width: 768px) { .main-layout { grid-template-columns: 1fr; } }
@@ -161,7 +171,6 @@
                 <div class="progress-bar-container">
                     <div id="seniorMargemBar" class="progress-bar" style="width: 0%; background-color: var(--primary);"></div>
                 </div>
-                <small style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;">Porcentagem da receita total que restou após pagar as contas.</small>
             </div>
             <div class="card">
                 <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Execução Consolidada do Teto de Despesas</div>
@@ -169,7 +178,19 @@
                 <div class="progress-bar-container">
                     <div id="seniorTetoBar" class="progress-bar" style="width: 0%; background-color: var(--success);"></div>
                 </div>
-                <small id="seniorTetoAviso" style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;">Insira uma meta orçamentária para ativar o termômetro.</small>
+                <small id="seniorTetoAviso" style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;"></small>
+            </div>
+        </div>
+
+        <!-- GRÁFICOS VISÃO SÊNIOR -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <div class="panel-title" style="font-size:15px; margin-bottom:12px;"><i class="fa-solid fa-chart-pie"></i> Despesas por Categoria</div>
+                <div id="chartExpensesArea"></div>
+            </div>
+            <div class="chart-card">
+                <div class="panel-title" style="font-size:15px; margin-bottom:12px;"><i class="fa-solid fa-chart-bar"></i> Receitas por Categoria</div>
+                <div id="chartIncomesArea"></div>
             </div>
         </div>
 
@@ -273,7 +294,6 @@
 
     <!-- SCRIPT DE LÓGICA INTEGRADA -->
     <script>
-        // CONFIGURAÇÃO DO FIREBASE (SUAS CHAVES OFICIAIS INTEGRADAS)
         const firebaseConfig = {
             apiKey: "AIzaSyDc3pdwFlSGdVkdFOSCUBJZpIRQOPmPc0o",
             authDomain: "financas-do-edy.firebaseapp.com",
@@ -284,12 +304,10 @@
             measurementId: "G-BC9HXQ3LDQ"
         };
 
-        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Variáveis de Controle Global
         let currentUser = null;
         let authMode = 'login';
         let currentCatTab = 'expense';
@@ -301,7 +319,6 @@
             expense: ['Mercado', 'Moradia', 'Transporte', 'Saúde', 'Lazer', 'Outros'].sort()
         };
 
-        // Ciclo de Vida da Autenticação Google
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
@@ -309,11 +326,13 @@
                 document.getElementById('mainApp').style.display = 'block';
                 document.getElementById('userDisplay').innerText = `Operador: ${user.email}`;
                 
-                // CORREÇÃO MÁXIMA DA DATA ATUAL DO SISTEMA (TRAVA O FUSO HORÁRIO LOCAL DO BRASIL BRT)
-                const fusoBrasil = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
-                const anoStr = fusoBrasil.getFullYear();
-                const mesStr = String(fusoBrasil.getMonth() + 1).padStart(2, '0');
-                const diaStr = String(fusoBrasil.getDate()).padStart(2, '0');
+                // CORREÇÃO DEFINITIVA DA DATA: Sem fuso horário do Objeto Date do JS
+                const hoje = new Date();
+                const localData = hoje.toLocaleDateString('pt-BR', {timeZone: 'America/Sao_Paulo'}).split('/'); // [DD, MM, AAAA]
+                
+                const anoStr = localData[2];
+                const mesStr = localData[1];
+                const diaStr = localData[0];
 
                 document.getElementById('mesFiltro').value = `${anoStr}-${mesStr}`;
                 document.getElementById('txDate').value = `${anoStr}-${mesStr}-${diaStr}`;
@@ -408,6 +427,8 @@
             filtered.sort((a,b) => b.date.localeCompare(a.date));
 
             let totalInc = 0; let totalExp = 0;
+            let catExpTotals = {}; let catIncTotals = {};
+
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
@@ -416,10 +437,14 @@
             }
 
             filtered.forEach(item => {
-                if(item.type === 'income') totalInc += item.amount;
-                else totalExp += item.amount;
+                if(item.type === 'income') {
+                    totalInc += item.amount;
+                    catIncTotals[item.category] = (catIncTotals[item.category] || 0) + item.amount;
+                } else {
+                    totalExp += item.amount;
+                    catExpTotals[item.category] = (catExpTotals[item.category] || 0) + item.amount;
+                }
 
-                // FORMATAÇÃO ESTRITA SEM USO DE TIMESTAMPS (EVITA QUEDA DE DIA DEVIDO AO FUSO HORÁRIO)
                 const partesData = item.date.split('-');
                 const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : item.date;
 
@@ -452,16 +477,12 @@
             }
             document.getElementById('cardInvestment').innerText = formatarMoeda(plan.savings || 0);
 
-            // CÁLCULO E RENDERIZAÇÃO DASHBOARD VISÃO SÊNIOR
-            // 1. Margem de Eficiência de Caixa
+            // GESTÃO SÊNIOR: Indicadores de Desempenho
             let pctMargem = 0;
-            if (totalInc > 0) {
-                pctMargem = Math.max(0, (saldo / totalInc) * 100);
-            }
+            if (totalInc > 0) pctMargem = Math.max(0, (saldo / totalInc) * 100);
             document.getElementById('seniorMargemTxt').innerText = `${pctMargem.toFixed(1)}% (${formatarMoeda(saldo)} livre)`;
             document.getElementById('seniorMargemBar').style.width = `${Math.min(100, pctMargem)}%`;
 
-            // 2. Execução Consolidada de Teto
             const tetoDefinido = plan.expense || 0;
             if (tetoDefinido > 0) {
                 const pctTeto = (totalExp / tetoDefinido) * 100;
@@ -473,15 +494,15 @@
                 const avisoTeto = document.getElementById('seniorTetoAviso');
                 if (pctTeto <= 80) {
                     barraTeto.style.backgroundColor = 'var(--success)';
-                    avisoTeto.innerHTML = "🟢 Saúde Operacional: Gastos dentro do limite seguro de controle.";
+                    avisoTeto.innerHTML = "🟢 Dentro do limite seguro de controle.";
                     avisoTeto.style.color = 'var(--success)';
                 } else if (pctTeto <= 100) {
                     barraTeto.style.backgroundColor = 'var(--warning)';
-                    avisoTeto.innerHTML = "🟡 Zona de Atenção: Orçamento próximo do teto estipulado.";
+                    avisoTeto.innerHTML = "🟡 Zona de Atenção: Orçamento próximo do teto.";
                     avisoTeto.style.color = 'var(--warning)';
                 } else {
                     barraTeto.style.backgroundColor = 'var(--danger)';
-                    avisoTeto.innerHTML = "🔴 Risco Orçamentário: Teto estourado. Corte custos imediatamente!";
+                    avisoTeto.innerHTML = "🔴 Risco Orçamentário: Teto estourado!";
                     avisoTeto.style.color = 'var(--danger)';
                 }
             } else {
@@ -490,6 +511,40 @@
                 document.getElementById('seniorTetoAviso').innerText = "Insira uma meta orçamentária para ativar o termômetro.";
                 document.getElementById('seniorTetoAviso').style.color = 'var(--text-secondary)';
             }
+
+            // RECONSTRUÇÃO COMPLETA DOS GRÁFICOS VISUAIS (BARRAS EXECUTIVAS)
+            renderGraficoBarras('chartExpensesArea', catExpTotals, totalExp, '#ef4444');
+            renderGraficoBarras('chartIncomesArea', catIncTotals, totalInc, '#10b981');
+        }
+
+        function renderGraficoBarras(containerId, dataObj, totalGeral, corBarra) {
+            const area = document.getElementById(containerId);
+            area.innerHTML = '';
+            const chaves = Object.keys(dataObj);
+
+            if(chaves.length === 0) {
+                area.innerHTML = `<div style="font-size:12px; color:var(--text-secondary); text-align:center; padding: 20px 0;">Sem dados grafados para este mês.</div>`;
+                return;
+            }
+
+            // Ordena o gráfico do maior valor para o menor
+            chaves.sort((a,b) => dataObj[b] - dataObj[a]);
+
+            chaves.forEach(catName => {
+                const valor = dataObj[catName];
+                const pct = totalGeral > 0 ? (valor / totalGeral) * 100 : 0;
+
+                const row = document.createElement('div');
+                row.className = 'chart-row';
+                row.innerHTML = `
+                    <div class="chart-label" title="${catName}">${catName}</div>
+                    <div class="chart-bar-wrapper">
+                        <div class="chart-bar" style="width: ${pct.toFixed(1)}%; background-color: ${corBarra};"></div>
+                        <div class="chart-value-inline">${formatarMoeda(valor)} (${pct.toFixed(0)}%)</div>
+                    </div>
+                `;
+                area.appendChild(row);
+            });
         }
 
         function formatarMoeda(v) {
@@ -611,6 +666,11 @@
             localStorage.setItem('edy_theme', isDark ? 'dark' : 'light');
         }
         if(localStorage.getItem('edy_theme') === 'dark') document.body.classList.add('dark');
+
+        document.addEventListener("click", function(e) {
+            const modal = document.getElementById('modalCategorias');
+            if (e.target === modal) closeCategoriesModal();
+        });
 
         function exportarPDF() {
             const mes = document.getElementById('mesFiltro').value;
