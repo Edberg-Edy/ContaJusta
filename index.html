@@ -2,27 +2,372 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Finanças do Edy</title>
+    
+    <!-- Configurações para o app abrir em tela cheia no celular (Modo Web App) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4f46e5">
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --radius: 8px;
+        }
+
+        body.dark {
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, sans-serif; }
+        body { background: var(--background); color: var(--text); transition: background 0.3s, color 0.3s; padding: 16px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+        .logo { font-size: 22px; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; justify-content: space-between; }
+        @media(min-width: 768px) { .controls { width: auto; } }
+
+        button, input, select { padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; cursor: pointer; }
+        button.btn-p { background: var(--primary); color: white; border: none; font-weight: 500; }
+        button.btn-p:hover { background: var(--primary-hover); }
+        button.btn-s { background: var(--success); color: white; border: none; font-weight: 500; }
+        button.btn-s:hover { background: var(--success-hover); }
+        button.btn-d { background: var(--danger); color: white; border: none; font-weight: 500; }
+        button.btn-d:hover { background: var(--danger-hover); }
+
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card { background: var(--surface); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-title { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
+        .card-value { font-size: 24px; font-weight: bold; }
+        .card-subtext { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        .senior-dashboard { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+        .progress-bar-container { background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+        .progress-bar { height: 100%; transition: width 0.4s ease; }
+
+        .charts-wrapper { display: block; margin-bottom: 24px; transition: all 0.3s ease; }
+        .charts-wrapper.collapsed { display: none; }
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media(max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
+        .chart-card { background: var(--surface); padding: 18px; border-radius: var(--radius); border: 1px solid var(--border); }
+        
+        .pie-layout { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 10px 0; }
+        @media(max-width: 480px) { .pie-layout { flex-direction: column; gap: 16px; } }
+        
+        .pie-circle { width: 120px; height: 120px; border-radius: 50%; background: var(--border); position: relative; flex-shrink: 0; box-shadow: inset 0 0 0 20px var(--surface); }
+        
+        .pie-legend { flex: 1; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 500; }
+        .legend-left { display: flex; align-items: center; gap: 6px; max-width: 130px; }
+        .legend-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+        .legend-name { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: var(--text); }
+        .legend-val { font-weight: bold; color: var(--text-secondary); text-align: right; }
+
+        .main-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+        @media(max-width: 768px) { .main-layout { grid-template-columns: 1fr; } }
+
+        .panel { background: var(--surface); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 20px; }
+        .panel-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        
+        .form-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+        .form-group input, .form-group select { width: 100%; }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { color: var(--text-secondary); font-weight: 600; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; display: inline-block; }
+        .badge.inc { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .badge.exp { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        #authScreen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--background); z-index: 999; padding: 16px; }
+        .auth-card { background: var(--surface); padding: 24px; border-radius: var(--radius); border: 1px solid var(--border); width: 100%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .auth-tab { flex: 1; border: none; background: transparent; padding: 8px; font-weight: 600; color: var(--text-secondary); }
+        .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); border-radius: 0; }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+        .modal.active { display: flex; }
+        .modal-body { background: var(--surface); padding: 24px; border-radius: var(--radius); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); position: relative; }
+
+        .cat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .btn-table-actions { display: flex; gap: 4px; justify-content: center; }
+
+        /* REGRAS EXCLUSIVAS PARA ADAPTAÇÃO TOTAL NO CELULAR (SEM ROLAGEM LATERAL) */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            header { gap: 8px; margin-bottom: 16px; }
+            .logo { font-size: 20px; width: 100%; justify-content: center; }
+            .controls { justify-content: center; gap: 6px; }
+            .controls input[type="month"] { flex-grow: 1; text-align: center; }
+            
+            /* Transforma a tabela em formato de lista/cards individuais */
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin-bottom: 10px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+            td { border: none; padding: 6px 4px; text-align: left !important; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+            td::before { content: attr(data-label); font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+            td:last-child { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 10px; justify-content: center; }
+            .btn-table-actions { width: 100%; gap: 10px; }
+            .btn-table-actions button { flex: 1; padding: 8px; }
+        }
+    </style>
+
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <style>
-        body { font-family: sans-serif; background: #f8fafc; }
-        #app { display: none; padding: 20px; }
-        .box { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
-    <div id="app">
-        <div class="box">
-            <h1>Painel de Finanças</h1>
-            <p>Seja bem-vindo de volta, Edy!</p>
-            <div id="status-banco">Conectando ao seu banco de dados...</div>
-            <button onclick="auth.signOut(); location.reload();" style="margin-top:20px;">Sair</button>
+    <!-- TELA DE LOGIN / CADASTRO -->
+    <div id="authScreen">
+        <div class="auth-card">
+            <h2 style="margin-bottom:20px; text-align:center; color:var(--primary);">Finanças do Edy</h2>
+            <div class="auth-tabs">
+                <button id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Acessar</button>
+                <button id="tabRegister" class="auth-tab" onclick="switchAuthTab('register')">Cadastrar</button>
+            </div>
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="authEmail" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="authPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-p" id="btnAuthSubmit" style="width:100%; margin-top:10px;">Entrar no Painel</button>
+            </form>
         </div>
     </div>
 
+    <!-- APLICAÇÃO PRINCIPAL -->
+    <div id="mainApp" class="container" style="display:none;">
+        <header>
+            <div class="logo"><i class="fa-solid fa-wallet"></i> Finanças do Edy</div>
+            <div class="controls">
+                <span id="userDisplay" style="font-size:13px; color:var(--text-secondary); display:none;"></span>
+                <input type="month" id="mesFiltro" onchange="loadUserData()">
+                <button onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
+                <button onclick="toggleCharts()"><i class="fa-solid fa-chart-pie"></i></button>
+                <button onclick="openCategoriesModal()"><i class="fa-solid fa-tags"></i></button>
+                <button class="btn-p" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf"></i></button>
+                <button class="btn-d" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+        </header>
+
+        <!-- CARDS DASHBOARD -->
+        <div class="cards-grid">
+            <div class="card" style="border-left: 4px solid var(--success);">
+                <div class="card-title">Entrada Real</div>
+                <div class="card-value" id="cardIncome" style="color:var(--success);">R$ 0,00</div>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--danger);">
+                <div class="card-title">Saída Real</div>
+                <div class="card-value" id="cardExpense" style="color:var(--danger);">R$ 0,00</div>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--primary);">
+                <div class="card-title">Saldo Líquido</div>
+                <div class="card-value" id="cardBalance">R$ 0,00</div>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--warning);">
+                <div class="card-title">Meta Investimento</div>
+                <div class="card-value" id="cardInvestment" style="color:var(--warning);">0%</div>
+                <div class="card-subtext" id="cardInvestmentSub">R$ 0,00 aplicado</div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD VISÃO SÊNIOR (CONTROLE DE TETO) -->
+        <div class="senior-dashboard">
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Execução do Teto de Despesas</div>
+                <div class="card-value" id="seniorTetoTxt" style="font-size: 20px; margin-top: 5px;">0%</div>
+                <div class="progress-bar-container">
+                    <div id="seniorTetoBar" class="progress-bar" style="width: 0%; background-color: var(--success);"></div>
+                </div>
+                <small id="seniorTetoAviso" style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;"></small>
+            </div>
+        </div>
+
+        <!-- SEÇÃO DE GRÁFICOS DE PIZZA -->
+        <div class="charts-wrapper" id="chartsWrapper">
+            <div class="charts-container">
+                <div class="chart-card" id="areaDespesasPizza">
+                    <div class="panel-title" style="font-size:14px; margin-bottom:5px; color:var(--text);"><i class="fa-solid fa-chart-pie"></i> Proporção de Despesas</div>
+                    <div class="pie-layout">
+                        <div class="pie-circle" id="pieExpenseCircle"></div>
+                        <div class="pie-legend" id="pieExpenseLegend"></div>
+                    </div>
+                </div>
+                <div class="chart-card" id="areaReceitasPizza">
+                    <div class="panel-title" style="font-size:14px; margin-bottom:5px; color:var(--text);"><i class="fa-solid fa-chart-pie"></i> Origem de Receitas</div>
+                    <div class="pie-layout">
+                        <div class="pie-circle" id="pieIncomeCircle"></div>
+                        <div class="pie-legend" id="pieIncomeLegend"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <!-- COLUNA DA ESQUERDA -->
+            <div>
+                <!-- FORMULÁRIO OPERAÇÃO FIXO -->
+                <div class="panel">
+                    <div class="panel-title"><i class="fa-solid fa-circle-plus"></i> Nova Operação</div>
+                    <form onsubmit="registrarFluxo(event, 'novo')">
+                        <div class="form-group">
+                            <label>Data</label>
+                            <input type="date" id="txDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Natureza</label>
+                            <select id="txType" onchange="atualizarSeletoresForm('novo')" required>
+                                <option value="expense">Despesa</option>
+                                <option value="income">Receita</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <select id="txCategory" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <input type="text" id="txDescription" required placeholder="Ex: Mercado... ">
+                        </div>
+                        <div class="form-group">
+                            <label>Valor</label>
+                            <input type="number" step="0.01" id="txAmount" required placeholder="0,00">
+                        </div>
+                        <button type="submit" class="btn-s" style="width:100%;">Registrar</button>
+                    </form>
+                </div>
+
+                <!-- PLANEJAMENTO MENSAL -->
+                <div class="panel">
+                    <div class="panel-title"><i class="fa-solid fa-sliders"></i> Planejamento Mensal</div>
+                    <form onsubmit="salvarPlanejamento(event)">
+                        <div class="form-group">
+                            <label>Previsão de Receitas</label>
+                            <input type="number" step="0.01" id="planIncome" placeholder="R$ 0,00">
+                        </div>
+                        <div class="form-group">
+                            <label>Teto de Despesas</label>
+                            <input type="number" step="0.01" id="planExpense" placeholder="R$ 0,00">
+                        </div>
+                        <div class="form-group">
+                            <label>Meta para Investimento</label>
+                            <input type="number" step="0.01" id="planSavings" placeholder="R$ 0,00">
+                        </div>
+                        <button type="submit" class="btn-p" style="width:100%;">Salvar Operação</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- COLUNA DA DIREITA: TABELA -->
+            <div>
+                <div class="panel" id="pdfArea">
+                    <div class="panel-title"><i class="fa-solid fa-list"></i> Lançamentos Diários</div>
+                    <div style="overflow-x:hidden;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Categoria</th>
+                                    <th style="text-align:right;">Valor</th>
+                                    <th style="text-align:center;" class="no-pdf">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <button class="btn-d" onclick="limparDados()" style="float:right; width:100%; margin-top: 10px;"><i class="fa-solid fa-trash-can"></i> Expurgar Toda a Base</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JANELA FLUTUANTE PARA EDIÇÃO -->
+    <div class="modal" id="modalEdicao">
+        <div class="modal-body">
+            <div class="panel-title" style="justify-content:space-between; margin-bottom: 20px;">
+                <span><i class="fa-solid fa-pen-to-square" style="color:var(--primary);"></i> Editar Registro</span>
+                <button onclick="fecharModalEdicao()" style="background:none; border:none; font-size:22px; padding:0; line-height:1; color:var(--text-secondary);">&times;</button>
+            </div>
+            <form onsubmit="registrarFluxo(event, 'edicao')">
+                <input type="hidden" id="editTxId">
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="editTxDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Natureza</label>
+                    <select id="editTxType" onchange="atualizarSeletoresForm('edicao')" required>
+                        <option value="expense">Despesa</option>
+                        <option value="income">Receita</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="editTxCategory" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <input type="text" id="editTxDescription" required placeholder="Descrição...">
+                </div>
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" step="0.01" id="editTxAmount" required placeholder="0,00">
+                </div>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button type="button" class="btn-d" style="flex:1;" onclick="fecharModalEdicao()">Descartar</button>
+                    <button type="submit" class="btn-p" style="flex:2;">Salvar Alteração</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE GERENCIAR CATEGORIAS -->
+    <div class="modal" id="modalCategorias">
+        <div class="modal-body">
+            <div class="panel-title" style="justify-content:space-between;">
+                <span>Dicionário de Categorias</span>
+                <button onclick="closeCategoriesModal()">&times;</button>
+            </div>
+            <div class="auth-tabs">
+                <button id="tabCatExpense" class="auth-tab active" onclick="switchCatTab('expense')">Despesas</button>
+                <button id="tabCatIncome" class="auth-tab" onclick="switchCatTab('income')">Receitas</button>
+            </div>
+            <div style="display:flex; gap:8px; margin-bottom:16px;">
+                <input type="text" id="newCatName" placeholder="Nova categoria..." style="flex:1;">
+                <button class="btn-s" onclick="adicionarCategoria()">Add</button>
+            </div>
+            <div id="modalCategoriesList" style="max-height:250px; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS DE LÓGICA -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDc3pdwFlSGdVkdFOSCUBJZpIRQOPmPc0o",
@@ -30,34 +375,474 @@
             projectId: "financas-do-edy",
             storageBucket: "financas-do-edy.firebasestorage.app",
             messagingSenderId: "1087768862467",
-            appId: "1:1087768862467:web:126da5464bc76725841336"
+            appId: "1:1087768862467:web:126da5464bc76725841336",
+            measurementId: "G-BC9HXQ3LDQ"
         };
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        auth.onAuthStateChanged(async (user) => {
+        let currentUser = null;
+        let authMode = 'login';
+        let currentCatTab = 'expense';
+        
+        let lancamentos = [];
+        let planejamento = {};
+        let categorias = {
+            income: ['Salário', 'Freelance', 'Investimentos', 'Outros'].sort(),
+            expense: ['Mercado', 'Moradia', 'Transporte', 'Saúde', 'Lazer', 'Outros'].sort()
+        };
+
+        const paletaDespesas = ['#ef4444', '#f97316', '#f59e0b', '#ec4899', '#64748b'];
+        const paletaReceitas = ['#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#64748b'];
+
+        auth.onAuthStateChanged(user => {
             if (user) {
-                document.getElementById('app').style.display = 'block';
+                currentUser = user;
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('userDisplay').innerText = `Operador: ${user.email}`;
                 
-                // TESTE DE LEITURA DO BANCO
-                try {
-                    const doc = await db.collection('users').doc(user.uid).get();
-                    if (doc.exists) {
-                        document.getElementById('status-banco').innerText = "✅ Dados carregados com sucesso!";
-                        console.log("Categorias encontradas:", doc.data().categorias);
-                    } else {
-                        document.getElementById('status-banco').innerText = "⚠️ Logado, mas nenhum documento 'users' encontrado.";
-                    }
-                } catch (e) {
-                    document.getElementById('status-banco').innerText = "❌ Erro ao ler o banco: " + e.message;
-                }
+                const hoje = new Date();
+                const localData = hoje.toLocaleDateString('pt-BR', {timeZone: 'America/Sao_Paulo'}).split('/');
+                document.getElementById('mesFiltro').value = `${localData[2]}-${localData[1]}`;
+                document.getElementById('txDate').value = `${localData[2]}-${localData[1]}-${localData[0]}`;
+                
+                subscribeToData();
             } else {
-                // Se não logado, recarrega para voltar à tela de login
-                location.reload();
+                currentUser = null;
+                document.getElementById('authScreen').style.display = 'flex';
+                document.getElementById('mainApp').style.display = 'none';
             }
         });
+
+        function switchAuthTab(mode) {
+            authMode = mode;
+            document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+            document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
+            document.getElementById('btnAuthSubmit').innerText = mode === 'login' ? 'Entrar no Painel' : 'Registrar Credenciais';
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            try {
+                if (authMode === 'login') {
+                    await auth.signInWithEmailAndPassword(email, password);
+                } else {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    alert('Conta criada com sucesso!');
+                }
+            } catch (err) { alert('Erro na operação: ' + err.message); }
+        }
+
+        function logout() { auth.signOut(); }
+
+        function subscribeToData() {
+            if(!currentUser) return;
+            db.collection('users').doc(currentUser.uid).onSnapshot(doc => {
+                if(doc.exists) {
+                    const data = doc.data();
+                    lancamentos = data.lancamentos || [];
+                    planejamento = data.planejamento || {};
+                    if(data.categorias) categorias = data.categorias;
+                }
+                if(categorias.income) { categorias.income = categorias.income.filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'})); }
+                if(categorias.expense) { categorias.expense = categorias.expense.filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'})); }
+                atualizarTela();
+            });
+        }
+
+        function loadUserData() { atualizarTela(); }
+
+        async function saveToCloud() {
+            if(!currentUser) return;
+            await db.collection('users').doc(currentUser.uid).set({
+                lancamentos, planejamento, categorias
+            }, { merge: true });
+        }
+
+        function atualizarTela() {
+            atualizarSeletoresForm('novo');
+            atualizarSeletoresForm('edicao');
+            renderTabelaEMetricas();
+            if(document.getElementById('modalCategorias').classList.contains('active')) {
+                renderCategoriesModalList();
+            }
+        }
+
+        function atualizarSeletoresForm(prefixo) {
+            const idTipo = prefixo === 'edicao' ? 'editTxType' : 'txType';
+            const idCat = prefixo === 'edicao' ? 'editTxCategory' : 'txCategory';
+            
+            const elementoTipo = document.getElementById(idTipo);
+            const select = document.getElementById(idCat);
+            if(!elementoTipo || !select) return;
+
+            const type = elementoTipo.value;
+            const valorSelecionadoAntes = select.value;
+            select.innerHTML = '';
+            
+            const list = categorias[type] || [];
+            list.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.innerText = c;
+                select.appendChild(opt);
+            });
+            if(list.includes(valorSelecionadoAntes)) select.value = valorSelecionadoAntes;
+        }
+
+        function renderTabelaEMetricas() {
+            const mes = document.getElementById('mesFiltro').value;
+            const filtered = lancamentos.filter(x => x.date.startsWith(mes));
+            filtered.sort((a,b) => b.date.localeCompare(a.date));
+
+            let totalInc = 0; let totalExp = 0; let totalInvestidoReal = 0;
+            let catExpTotals = {}; let catIncTotals = {};
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary);">Nenhum registro para este período.</td></tr>`;
+            }
+
+            filtered.forEach(item => {
+                if(item.type === 'income') {
+                    totalInc += item.amount;
+                    catIncTotals[item.category] = (catIncTotals[item.category] || 0) + item.amount;
+                } else {
+                    totalExp += item.amount;
+                    catExpTotals[item.category] = (catExpTotals[item.category] || 0) + item.amount;
+                    
+                    const catLower = item.category ? item.category.toLowerCase() : '';
+                    if(catLower === 'investimento' || catLower === 'investimentos') {
+                        totalInvestidoReal += item.amount;
+                    }
+                }
+
+                const partesData = item.date.split('-');
+                const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : item.date;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td data-label="Data">${dataFormatada}</td>
+                    <td data-label="Descrição"><strong>${item.description}</strong></td>
+                    <td data-label="Categoria"><span class="badge ${item.type === 'income' ? 'inc' : 'exp'}">${item.category}</span></td>
+                    <td data-label="Valor" style="text-align:right; font-weight:700; color:var(--${item.type === 'income' ? 'success' : 'danger'})">
+                        ${formatarMoeda(item.amount)}
+                    </td>
+                    <td class="no-pdf">
+                        <div class="btn-table-actions">
+                            <button onclick="prepararEdicao('${item.id}')" class="btn-p"><i class="fa-solid fa-pen"></i> Editar</button>
+                            <button onclick="deletarLancamento('${item.id}')" class="btn-d"><i class="fa-solid fa-trash"></i> Excluir</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const saldo = totalInc - totalExp;
+            document.getElementById('cardIncome').innerText = formatarMoeda(totalInc);
+            document.getElementById('cardExpense').innerText = formatarMoeda(totalExp);
+            document.getElementById('cardBalance').innerText = formatarMoeda(saldo);
+            document.getElementById('cardBalance').style.color = saldo >= 0 ? 'var(--success)' : 'var(--danger)';
+
+            const plan = planejamento[mes] || { income: 0, expense: 0, savings: 0 };
+            if(!document.activeElement || !['planIncome','planExpense','planSavings'].includes(document.activeElement.id)){
+                document.getElementById('planIncome').value = plan.income || '';
+                document.getElementById('planExpense').value = plan.expense || '';
+                document.getElementById('planSavings').value = plan.savings || '';
+            }
+
+            const metaInvestimento = plan.savings || 0;
+            if (metaInvestimento > 0) {
+                const pctInvestido = (totalInvestidoReal / metaInvestimento) * 100;
+                document.getElementById('cardInvestment').innerText = `${pctInvestido.toFixed(0)}%`;
+                document.getElementById('cardInvestmentSub').innerText = `${formatarMoeda(totalInvestidoReal)} de ${formatarMoeda(metaInvestimento)}`;
+            } else {
+                document.getElementById('cardInvestment').innerText = `0%`;
+                document.getElementById('cardInvestmentSub').innerText = `${formatarMoeda(totalInvestidoReal)} aplicado`;
+            }
+
+            const tetoDefinido = plan.expense || 0;
+            if (tetoDefinido > 0) {
+                const pctTeto = (totalExp / tetoDefinido) * 100;
+                document.getElementById('seniorTetoTxt').innerText = `${pctTeto.toFixed(1)}% (${formatarMoeda(totalExp)} de ${formatarMoeda(tetoDefinido)})`;
+                const barraTeto = document.getElementById('seniorTetoBar');
+                barraTeto.style.width = `${Math.min(100, pctTeto)}%`;
+
+                const avisoTeto = document.getElementById('seniorTetoAviso');
+                if (pctTeto <= 80) {
+                    barraTeto.style.backgroundColor = 'var(--success)';
+                    avisoTeto.innerHTML = "🟢 Dentro do limite seguro.";
+                    avisoTeto.style.color = 'var(--success)';
+                } else if (pctTeto <= 100) {
+                    barraTeto.style.backgroundColor = 'var(--warning)';
+                    avisoTeto.innerHTML = "🟡 Zona de Atenção.";
+                    avisoTeto.style.color = 'var(--warning)';
+                } else {
+                    barraTeto.style.backgroundColor = 'var(--danger)';
+                    avisoTeto.innerHTML = "🔴 Risco Orçamentário: Estourado!";
+                    avisoTeto.style.color = 'var(--danger)';
+                }
+            } else {
+                document.getElementById('seniorTetoTxt').innerText = "R$ 0,00 planejado";
+                document.getElementById('seniorTetoBar').style.width = '0%';
+                document.getElementById('seniorTetoAviso').innerText = "Insira um teto para ativar o termômetro.";
+                document.getElementById('seniorTetoAviso').style.color = 'var(--text-secondary)';
+            }
+
+            renderGraficoPizza('pieExpenseCircle', 'pieExpenseLegend', catExpTotals, totalExp, paletaDespesas);
+            renderGraficoPizza('pieIncomeCircle', 'pieIncomeLegend', catIncTotals, totalInc, paletaReceitas);
+        }
+
+        function renderGraficoPizza(circleId, legendId, dataObj, totalGeral, paletaCores) {
+            const circulo = document.getElementById(circleId);
+            const legenda = document.getElementById(legendId);
+            circulo.innerHTML = ''; legenda.innerHTML = '';
+            const chaves = Object.keys(dataObj).filter(k => dataObj[k] > 0);
+
+            if(chaves.length === 0 || totalGeral === 0) {
+                circulo.style.background = 'var(--border)';
+                legenda.innerHTML = `<div style="font-size:12px; color:var(--text-secondary); padding: 10px 0;">Sem movimentações registradas.</div>`;
+                return;
+            }
+
+            chaves.sort((a,b) => dataObj[b] - dataObj[a]);
+            const topCategorias = chaves.slice(0, 4);
+            const restoCategorias = chaves.slice(4);
+
+            let dadosFinais = [];
+            topCategorias.forEach(cat => dadosFinais.push({ name: cat, value: dataObj[cat] }));
+            if(restoCategorias.length > 0) {
+                let somaResto = 0;
+                restoCategorias.forEach(cat => somaResto += dataObj[cat]);
+                dadosFinais.push({ name: "Outros", value: somaResto });
+            }
+
+            let acumuladoPercent = 0; let gradientParts = [];
+            dadosFinais.forEach((item, index) => {
+                const cor = paletaCores[index] || '#64748b';
+                const pct = (item.value / totalGeral) * 100;
+                const deGraus = (acumuladoPercent * 3.6).toFixed(1);
+                acumuladoPercent += pct;
+                const ateGraus = (acumuladoPercent * 3.6).toFixed(1);
+                gradientParts.push(`${cor} ${deGraus}deg ${ateGraus}deg`);
+
+                const itemLegenda = document.createElement('div');
+                itemLegenda.className = 'legend-item';
+                itemLegenda.innerHTML = `
+                    <div class="legend-left">
+                        <div class="legend-color" style="background:${cor}"></div>
+                        <div class="legend-name" title="${item.name}">${item.name}</div>
+                    </div>
+                    <div class="legend-val">${pct.toFixed(0)}%</div>
+                `;
+                legenda.appendChild(itemLegenda);
+            });
+
+            circulo.style.background = `conic-gradient(${gradientParts.join(', ')})`;
+            const miolo = document.createElement('div');
+            miolo.style.position = 'absolute'; miolo.style.inset = '22px'; miolo.style.borderRadius = '50%'; miolo.style.backgroundColor = 'var(--surface)';
+            circulo.appendChild(miolo);
+        }
+
+        function formatarMoeda(v) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+        }
+
+        function prepararEdicao(id) {
+            const item = lancamentos.find(x => x.id === id);
+            if(!item) return;
+
+            document.getElementById('editTxId').value = item.id;
+            document.getElementById('editTxDate').value = item.date;
+            document.getElementById('editTxType').value = item.type;
+            
+            atualizarSeletoresForm('edicao');
+            document.getElementById('editTxCategory').value = item.category;
+            document.getElementById('editTxDescription').value = item.description;
+            document.getElementById('editTxAmount').value = item.amount;
+
+            document.getElementById('modalEdicao').classList.add('active');
+        }
+
+        function fecharModalEdicao() {
+            document.getElementById('modalEdicao').classList.remove('active');
+        }
+
+        function registrarFluxo(e, modo) {
+            e.preventDefault();
+            
+            const id = modo === 'edicao' ? document.getElementById('editTxId').value : null;
+            const dataInput = modo === 'edicao' ? document.getElementById('editTxDate').value : document.getElementById('txDate').value;
+            const type = modo === 'edicao' ? document.getElementById('editTxType').value : document.getElementById('txType').value;
+            const category = modo === 'edicao' ? document.getElementById('editTxCategory').value : document.getElementById('txCategory').value;
+            const description = modo === 'edicao' ? document.getElementById('editTxDescription').value : document.getElementById('txDescription').value;
+            const amount = modo === 'edicao' ? parseFloat(document.getElementById('editTxAmount').value) : parseFloat(document.getElementById('txAmount').value);
+
+            const dadosOperacao = { date: dataInput, type, category, description, amount };
+
+            if(id) {
+                const index = lancamentos.findIndex(x => x.id === id);
+                if(index !== -1) lancamentos[index] = { id, ...dadosOperacao };
+                fecharModalEdicao();
+            } else {
+                const tx = {
+                    id: 'tx_' + Date.now() + Math.random().toString(36).substr(2, 4),
+                    ...dadosOperacao
+                };
+                lancamentos.push(tx);
+                document.getElementById('txDescription').value = '';
+                document.getElementById('txAmount').value = '';
+            }
+            
+            saveToCloud();
+        }
+
+        function deletarLancamento(id) {
+            if(confirm('Remover este lançamento permanentemente?')) {
+                if(document.getElementById('editTxId').value === id) fecharModalEdicao();
+                lancamentos = lancamentos.filter(x => x.id !== id);
+                saveToCloud();
+            }
+        }
+
+        function salvarPlanejamento(e) {
+            e.preventDefault();
+            const mes = document.getElementById('mesFiltro').value;
+            planejamento[mes] = {
+                income: parseFloat(document.getElementById('planIncome').value) || 0,
+                expense: parseFloat(document.getElementById('planExpense').value) || 0,
+                savings: parseFloat(document.getElementById('planSavings').value) || 0
+            };
+            saveToCloud();
+            alert('Planejamento guardado com sucesso!');
+        }
+
+        function toggleCharts() {
+            const wrapper = document.getElementById('chartsWrapper');
+            wrapper.classList.toggle('collapsed');
+            localStorage.setItem('edy_charts_collapsed', wrapper.classList.contains('collapsed') ? 'yes' : 'no');
+        }
+        if(localStorage.getItem('edy_charts_collapsed') === 'yes') document.getElementById('chartsWrapper').classList.add('collapsed');
+
+        function openCategoriesModal() {
+            document.getElementById('modalCategorias').classList.add('active');
+            renderCategoriesModalList();
+        }
+        function closeCategoriesModal() { document.getElementById('modalCategorias').classList.remove('active'); }
+        function switchCatTab(tab) {
+            currentCatTab = tab;
+            document.getElementById('tabCatExpense').classList.toggle('active', tab === 'expense');
+            document.getElementById('tabCatIncome').classList.toggle('active', tab === 'income');
+            renderCategoriesModalList();
+        }
+
+        function renderCategoriesModalList() {
+            const listArea = document.getElementById('modalCategoriesList');
+            if(!listArea) return; listArea.innerHTML = '';
+            const list = categorias[currentCatTab] || [];
+            
+            list.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'cat-row';
+                div.innerHTML = `
+                    <span><strong>${cat}</strong></span>
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn-p" style="padding:4px 8px; font-size:12px;" onclick="editarCategoria('${cat}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-d" style="padding:4px 8px; font-size:12px;" onclick="removerCategoria('${cat}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                listArea.appendChild(div);
+            });
+        }
+
+        function adicionarCategoria() {
+            const nameInput = document.getElementById('newCatName');
+            if(!nameInput) return;
+            const name = nameInput.value.trim();
+            if(!name) return;
+            
+            if(categorias[currentCatTab].some(c => c.toLowerCase() === name.toLowerCase())) { 
+                alert('Esta categoria já existe!'); 
+                return; 
+            }
+            
+            categorias[currentCatTab].push(name);
+            categorias[currentCatTab] = categorias[currentCatTab].filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'}));
+            
+            nameInput.value = '';
+            atualizarTela();
+            saveToCloud();
+        }
+
+        function editarCategoria(oldName) {
+            const newName = prompt(`Mudar o nome da categoria "${oldName}" para:`, oldName);
+            if(!newName || newName.trim() === "" || oldName === newName.trim()) return;
+            const trimmed = newName.trim();
+            
+            if(categorias[currentCatTab].some(c => c.toLowerCase() === trimmed.toLowerCase() && c !== oldName)) { 
+                alert('Uma categoria com este nome já existe!'); 
+                return; 
+            }
+            
+            const idx = categorias[currentCatTab].indexOf(oldName);
+            if(idx !== -1) {
+                categorias[currentCatTab][idx] = trimmed;
+                categorias[currentCatTab] = categorias[currentCatTab].filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'}));
+                
+                lancamentos.forEach(l => {
+                    if(l.type === currentCatTab && l.category === oldName) l.category = trimmed;
+                });
+                atualizarTela();
+                saveToCloud();
+            }
+        }
+
+        function removerCategoria(name) {
+            if(confirm(`Remover a categoria "${name}"? Lançamentos existentes manterão este nome.`)) {
+                categorias[currentCatTab] = categorias[currentCatTab].filter(x => x !== name);
+                atualizarTela();
+                saveToCloud();
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem('edy_theme', isDark ? 'dark' : 'light');
+        }
+        if(localStorage.getItem('edy_theme') === 'dark') document.body.classList.add('dark');
+
+        document.addEventListener("click", function(e) {
+            if (e.target === document.getElementById('modalCategorias')) closeCategoriesModal();
+            if (e.target === document.getElementById('modalEdicao')) fecharModalEdicao();
+        });
+
+        function exportarPDF() {
+            const mes = document.getElementById('mesFiltro').value;
+            const element = document.createElement('div');
+            element.style.padding = '20px'; element.style.color = '#1e293b';
+            element.innerHTML = `
+                <h1 style="color:#4f46e5; margin-bottom:4px;">Finanças do Edy</h1>
+                <h3 style="color:#64748b; margin-bottom:20px;">Livro de Lançamentos Diários — Período: ${mes.split('-').reverse().join('/')}</h3>
+                ${document.getElementById('pdfArea').innerHTML}
+            `;
+            element.querySelectorAll('.no-pdf').forEach(x => x.remove());
+            
+            html2pdf().set({
+                margin: 10, filename: `Financas_Edy_${mes}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(element).save();
+        }
+
+        function limparDados() {
+            if(confirm('🚨 ATENÇÃO: Apagar definitivamente TODO o seu histórico de lançamentos e planejamentos na nuvem?')) {
+                lancamentos = []; planejamento = {}; saveToCloud();
+            }
+        }
     </script>
 </body>
 </html>
