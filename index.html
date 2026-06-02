@@ -57,17 +57,17 @@
         .progress-bar-container { background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
         .progress-bar { height: 100%; transition: width 0.4s ease; }
 
-        /* Painel Ocultável de Gráficos Slim */
+        /* Painel Ocultável de Gráficos Minimalistas */
         .charts-wrapper { display: block; margin-bottom: 24px; transition: all 0.3s ease; }
         .charts-wrapper.collapsed { display: none; }
         .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media(max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
         .chart-card { background: var(--surface); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
-        .chart-row { display: flex; align-items: center; margin-bottom: 8px; gap: 12px; }
-        .chart-label { width: 100px; font-size: 12px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; font-weight: 500; }
-        .chart-bar-wrapper { flex: 1; background: var(--border); height: 16px; border-radius: 4px; overflow: hidden; position: relative; }
+        .chart-row { display: flex; align-items: center; margin-bottom: 6px; gap: 8px; }
+        .chart-label { width: 90px; font-size: 11px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; font-weight: 600; color: var(--text-secondary); }
+        .chart-bar-wrapper { flex: 1; background: var(--border); height: 14px; border-radius: 4px; overflow: hidden; position: relative; }
         .chart-bar { height: 100%; width: 0%; transition: width 0.5s ease; }
-        .chart-value-inline { position: absolute; right: 8px; top: 0px; font-size: 10px; font-weight: bold; color: #1e293b; z-index: 2; }
+        .chart-value-inline { position: absolute; right: 6px; top: 0px; font-size: 9px; font-weight: bold; color: #1e293b; line-height: 14px; z-index: 2; }
 
         .main-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
         @media(max-width: 768px) { .main-layout { grid-template-columns: 1fr; } }
@@ -186,15 +186,15 @@
             </div>
         </div>
 
-        <!-- SEÇÃO DE GRÁFICOS RETRÁTIL (PREVINE POLUIÇÃO VISUAL) -->
+        <!-- SEÇÃO DE GRÁFICOS ANTI-POLUIÇÃO (MÁXIMO 5 BARRAS FIXAS) -->
         <div class="charts-wrapper" id="chartsWrapper">
             <div class="charts-container">
                 <div class="chart-card">
-                    <div class="panel-title" style="font-size:14px; margin-bottom:10px;"><i class="fa-solid fa-chart-pie"></i> Maiores Despesas por Categoria</div>
+                    <div class="panel-title" style="font-size:13px; margin-bottom:12px; color:var(--text);"><i class="fa-solid fa-chart-pie"></i> Top 4 Despesas + Outros</div>
                     <div id="chartExpensesArea"></div>
                 </div>
                 <div class="chart-card">
-                    <div class="panel-title" style="font-size:14px; margin-bottom:10px;"><i class="fa-solid fa-chart-bar"></i> Distribuição de Receitas</div>
+                    <div class="panel-title" style="font-size:13px; margin-bottom:12px; color:var(--text);"><i class="fa-solid fa-chart-bar"></i> Top 4 Receitas + Outros</div>
                     <div id="chartIncomesArea"></div>
                 </div>
             </div>
@@ -334,7 +334,6 @@
                 document.getElementById('mainApp').style.display = 'block';
                 document.getElementById('userDisplay').innerText = `Operador: ${user.email}`;
                 
-                // DATA ESTÁVEL
                 const hoje = new Date();
                 const localData = hoje.toLocaleDateString('pt-BR', {timeZone: 'America/Sao_Paulo'}).split('/');
                 const anoStr = localData[2];
@@ -526,49 +525,65 @@
                 document.getElementById('seniorTetoAviso').style.color = 'var(--text-secondary)';
             }
 
-            renderGraficoBarras('chartExpensesArea', catExpTotals, totalExp, '#ef4444');
-            renderGraficoBarras('chartIncomesArea', catIncTotals, totalInc, '#10b981');
+            renderGraficoAntiPoluicao('chartExpensesArea', catExpTotals, totalExp, '#ef4444');
+            renderGraficoAntiPoluicao('chartIncomesArea', catIncTotals, totalInc, '#10b981');
         }
 
-        function renderGraficoBarras(containerId, dataObj, totalGeral, corBarra) {
+        // LÓGICA DE AGRUPAMENTO TOP 4 + "OUTROS"
+        function renderGraficoAntiPoluicao(containerId, dataObj, totalGeral, corBarra) {
             const area = document.getElementById(containerId);
             area.innerHTML = '';
-            const chaves = Object.keys(dataObj);
+            
+            // Remove categorias com valor zero
+            const chaves = Object.keys(dataObj).filter(k => dataObj[k] > 0);
 
             if(chaves.length === 0) {
-                area.innerHTML = `<div style="font-size:12px; color:var(--text-secondary); text-align:center; padding: 15px 0;">Sem dados para este período.</div>`;
+                area.innerHTML = `<div style="font-size:11px; color:var(--text-secondary); text-align:center; padding: 15px 0;">Sem movimentações neste período.</div>`;
                 return;
             }
 
+            // Ordena do maior valor para o menor
             chaves.sort((a,b) => dataObj[b] - dataObj[a]);
 
-            // Mostra apenas o top 5 para evitar poluição visual na tela
-            const topChaves = chaves.slice(0, 5);
+            // Separa as top 4 e calcula o resto para virar "Outros"
+            const topCategorias = chaves.slice(0, 4);
+            const restoCategorias = chaves.slice(4);
 
-            topChaves.forEach(catName => {
-                const valor = dataObj[catName];
-                const pct = totalGeral > 0 ? (valor / totalGeral) * 100 : 0;
+            let dadosFinais = [];
+            
+            // Adiciona as top 4
+            topCategorias.forEach(cat => {
+                dadosFinais.push({ name: cat, value: dataObj[cat] });
+            });
+
+            // Se sobrou mais categorias, agrupa tudo em "Outras Categorias"
+            if(restoCategorias.length > 0) {
+                let somaResto = 0;
+                restoCategorias.forEach(cat => { somaResto += dataObj[cat]; });
+                dadosFinais.push({ name: "Outras", value: somaResto });
+            }
+
+            // Renderiza o gráfico limitado a no máximo 5 linhas estáveis
+            dadosFinais.forEach(item => {
+                const pct = totalGeral > 0 ? (item.value / totalGeral) * 100 : 0;
 
                 const row = document.createElement('div');
                 row.className = 'chart-row';
                 row.innerHTML = `
-                    <div class="chart-label" title="${catName}">${catName}</div>
+                    <div class="chart-label" title="${item.name}">${item.name}</div>
                     <div class="chart-bar-wrapper">
-                        <div class="chart-bar" style="width: ${pct.toFixed(1)}%; background-color: ${corCorresponde(corBarra, pct)};"></div>
-                        <div class="chart-value-inline">${formatarMoeda(valor)} (${pct.toFixed(0)}%)</div>
+                        <div class="chart-bar" style="width: ${pct.toFixed(1)}%; background-color: ${corBarra};"></div>
+                        <div class="chart-value-inline">${formatarMoeda(item.value)} (${pct.toFixed(0)}%)</div>
                     </div>
                 `;
                 area.appendChild(row);
             });
         }
 
-        function corCorresponde(baseCor, pct) { return baseCor; }
-
         function formatarMoeda(v) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
         }
 
-        // FUNÇÃO DE EDICÃO SÊNIOR
         function prepararEdicao(id) {
             const item = lancamentos.find(x => x.id === id);
             if(!item) return;
@@ -582,13 +597,11 @@
             document.getElementById('txDescription').value = item.description;
             document.getElementById('txAmount').value = item.amount;
 
-            // Transforma o visual do formulário em modo Edição
             document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Editar Operação`;
             document.getElementById('btnFormSubmit').innerText = "Atualizar Lançamento";
             document.getElementById('btnFormSubmit').className = "btn-p";
             document.getElementById('btnFormCancel').style.display = "block";
             
-            // Rola a tela suavemente para o formulário no celular
             document.getElementById('formTitle').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -617,14 +630,12 @@
             };
 
             if(txId) {
-                // Modo Edição: Altera o item existente mantendo o ID original
                 const index = lancamentos.findIndex(x => x.id === txId);
                 if(index !== -1) {
                     lancamentos[index] = { id: txId, ...novaOperacao };
                 }
                 cancelarEdicao();
             } else {
-                // Modo Registro: Cria um novo item
                 const tx = {
                     id: 'tx_' + Date.now() + Math.random().toString(36).substr(2, 4),
                     ...novaOperacao
@@ -657,14 +668,12 @@
             alert('Planejamento guardado com sucesso!');
         }
 
-        // Alternador Retrátil do Painel de Gráficos
         function toggleCharts() {
             const wrapper = document.getElementById('chartsWrapper');
             wrapper.classList.toggle('collapsed');
             const isCollapsed = wrapper.classList.contains('collapsed');
             localStorage.setItem('edy_charts_collapsed', isCollapsed ? 'yes' : 'no');
         }
-        // Resgata preferência do painel
         if(localStorage.getItem('edy_charts_collapsed') === 'yes') {
             document.getElementById('chartsWrapper').classList.add('collapsed');
         }
