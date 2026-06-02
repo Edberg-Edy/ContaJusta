@@ -51,6 +51,12 @@
         .card-title { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
         .card-value { font-size: 24px; font-weight: bold; }
 
+        /* Estilos do Dashboard Sênior */
+        .senior-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        @media(max-width: 768px) { .senior-dashboard { grid-template-columns: 1fr; } }
+        .progress-bar-container { background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+        .progress-bar { height: 100%; transition: width 0.4s ease, background-color 0.3s; }
+
         .main-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
         @media(max-width: 768px) { .main-layout { grid-template-columns: 1fr; } }
 
@@ -130,20 +136,40 @@
         <!-- CARDS DASHBOARD -->
         <div class="cards-grid">
             <div class="card" style="border-left: 4px solid var(--success);">
-                <div class="card-title">Entrada</div>
+                <div class="card-title">Entrada Real</div>
                 <div class="card-value" id="cardIncome" style="color:var(--success);">R$ 0,00</div>
             </div>
             <div class="card" style="border-left: 4px solid var(--danger);">
-                <div class="card-title">Saída</div>
+                <div class="card-title">Saída Real</div>
                 <div class="card-value" id="cardExpense" style="color:var(--danger);">R$ 0,00</div>
             </div>
             <div class="card" style="border-left: 4px solid var(--primary);">
-                <div class="card-title">Saldo</div>
+                <div class="card-title">Saldo Líquido</div>
                 <div class="card-value" id="cardBalance">R$ 0,00</div>
             </div>
             <div class="card" style="border-left: 4px solid var(--warning);">
-                <div class="card-title">Investimento</div>
+                <div class="card-title">Meta Investimento</div>
                 <div class="card-value" id="cardInvestment" style="color:var(--warning);">R$ 0,00</div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD VISÃO SÊNIOR (INDICADORES DE DESEMPENHO) -->
+        <div class="senior-dashboard">
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-shield-halved"></i> Eficiência de Caixa (Margem Restante)</div>
+                <div class="card-value" id="seniorMargemTxt" style="font-size: 20px; margin-top: 5px;">0%</div>
+                <div class="progress-bar-container">
+                    <div id="seniorMargemBar" class="progress-bar" style="width: 0%; background-color: var(--primary);"></div>
+                </div>
+                <small style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;">Porcentagem da receita total que restou após pagar as contas.</small>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Execução Consolidada do Teto de Despesas</div>
+                <div class="card-value" id="seniorTetoTxt" style="font-size: 20px; margin-top: 5px;">0%</div>
+                <div class="progress-bar-container">
+                    <div id="seniorTetoBar" class="progress-bar" style="width: 0%; background-color: var(--success);"></div>
+                </div>
+                <small id="seniorTetoAviso" style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;">Insira uma meta orçamentária para ativar o termômetro.</small>
             </div>
         </div>
 
@@ -283,12 +309,15 @@
                 document.getElementById('mainApp').style.display = 'block';
                 document.getElementById('userDisplay').innerText = `Operador: ${user.email}`;
                 
-                // Define mês atual padrão
-                const d = new Date();
-                document.getElementById('mesFiltro').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-                document.getElementById('txDate').value = d.toISOString().split('T')[0];
+                // CORREÇÃO MÁXIMA DA DATA ATUAL DO SISTEMA (TRAVA O FUSO HORÁRIO LOCAL DO BRASIL BRT)
+                const fusoBrasil = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+                const anoStr = fusoBrasil.getFullYear();
+                const mesStr = String(fusoBrasil.getMonth() + 1).padStart(2, '0');
+                const diaStr = String(fusoBrasil.getDate()).padStart(2, '0');
+
+                document.getElementById('mesFiltro').value = `${anoStr}-${mesStr}`;
+                document.getElementById('txDate').value = `${anoStr}-${mesStr}-${diaStr}`;
                 
-                // Escuta os dados da nuvem em tempo real
                 subscribeToData();
             } else {
                 currentUser = null;
@@ -322,7 +351,6 @@
 
         function logout() { auth.signOut(); }
 
-        // Sincronização em tempo real via Nuvem (Firestore)
         function subscribeToData() {
             if(!currentUser) return;
             db.collection('users').doc(currentUser.uid).onSnapshot(doc => {
@@ -334,7 +362,6 @@
                         categorias = data.categorias;
                     }
                 }
-                // Garante que as categorias estejam sempre em ordem alfabética de A-Z
                 if(categorias.income) categorias.income.sort();
                 if(categorias.expense) categorias.expense.sort();
                 
@@ -378,7 +405,6 @@
             const mes = document.getElementById('mesFiltro').value;
             const filtered = lancamentos.filter(x => x.date.startsWith(mes));
             
-            // Ordena tabela por data decrescente
             filtered.sort((a,b) => b.date.localeCompare(a.date));
 
             let totalInc = 0; let totalExp = 0;
@@ -393,7 +419,7 @@
                 if(item.type === 'income') totalInc += item.amount;
                 else totalExp += item.amount;
 
-                // CORREÇÃO DE DATA: Evita problemas dividindo a string AAAA-MM-DD e remontando
+                // FORMATAÇÃO ESTRITA SEM USO DE TIMESTAMPS (EVITA QUEDA DE DIA DEVIDO AO FUSO HORÁRIO)
                 const partesData = item.date.split('-');
                 const dataFormatada = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : item.date;
 
@@ -418,7 +444,6 @@
             document.getElementById('cardBalance').innerText = formatarMoeda(saldo);
             document.getElementById('cardBalance').style.color = saldo >= 0 ? 'var(--success)' : 'var(--danger)';
 
-            // Preenche Planejamento Mensal nos inputs se houver dados salvos
             const plan = planejamento[mes] || { income: 0, expense: 0, savings: 0 };
             if(!document.activeElement || !['planIncome','planExpense','planSavings'].includes(document.activeElement.id)){
                 document.getElementById('planIncome').value = plan.income || '';
@@ -426,17 +451,53 @@
                 document.getElementById('planSavings').value = plan.savings || '';
             }
             document.getElementById('cardInvestment').innerText = formatarMoeda(plan.savings || 0);
+
+            // CÁLCULO E RENDERIZAÇÃO DASHBOARD VISÃO SÊNIOR
+            // 1. Margem de Eficiência de Caixa
+            let pctMargem = 0;
+            if (totalInc > 0) {
+                pctMargem = Math.max(0, (saldo / totalInc) * 100);
+            }
+            document.getElementById('seniorMargemTxt').innerText = `${pctMargem.toFixed(1)}% (${formatarMoeda(saldo)} livre)`;
+            document.getElementById('seniorMargemBar').style.width = `${Math.min(100, pctMargem)}%`;
+
+            // 2. Execução Consolidada de Teto
+            const tetoDefinido = plan.expense || 0;
+            if (tetoDefinido > 0) {
+                const pctTeto = (totalExp / tetoDefinido) * 100;
+                document.getElementById('seniorTetoTxt').innerText = `${pctTeto.toFixed(1)}% (${formatarMoeda(totalExp)} de ${formatarMoeda(tetoDefinido)})`;
+                
+                const barraTeto = document.getElementById('seniorTetoBar');
+                barraTeto.style.width = `${Math.min(100, pctTeto)}%`;
+
+                const avisoTeto = document.getElementById('seniorTetoAviso');
+                if (pctTeto <= 80) {
+                    barraTeto.style.backgroundColor = 'var(--success)';
+                    avisoTeto.innerHTML = "🟢 Saúde Operacional: Gastos dentro do limite seguro de controle.";
+                    avisoTeto.style.color = 'var(--success)';
+                } else if (pctTeto <= 100) {
+                    barraTeto.style.backgroundColor = 'var(--warning)';
+                    avisoTeto.innerHTML = "🟡 Zona de Atenção: Orçamento próximo do teto estipulado.";
+                    avisoTeto.style.color = 'var(--warning)';
+                } else {
+                    barraTeto.style.backgroundColor = 'var(--danger)';
+                    avisoTeto.innerHTML = "🔴 Risco Orçamentário: Teto estourado. Corte custos imediatamente!";
+                    avisoTeto.style.color = 'var(--danger)';
+                }
+            } else {
+                document.getElementById('seniorTetoTxt').innerText = "R$ 0,00 planejado";
+                document.getElementById('seniorTetoBar').style.width = '0%';
+                document.getElementById('seniorTetoAviso').innerText = "Insira uma meta orçamentária para ativar o termômetro.";
+                document.getElementById('seniorTetoAviso').style.color = 'var(--text-secondary)';
+            }
         }
 
         function formatarMoeda(v) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
         }
 
-        // Operações de Lançamentos
         function registrarFluxo(e) {
             e.preventDefault();
-            
-            // CORREÇÃO DE INPUT: Salva estritamente o valor em texto puro escolhido pelo usuário
             const dataInput = document.getElementById('txDate').value;
 
             const tx = {
@@ -472,7 +533,6 @@
             alert('Planejamento guardado com sucesso!');
         }
 
-        // Operações de Categoria Dentro do Modal
         function openCategoriesModal() {
             document.getElementById('modalCategorias').classList.add('active');
             renderCategoriesModalList();
@@ -546,7 +606,6 @@
             }
         }
 
-        // Funções Adicionais (Tema e PDF)
         function toggleTheme() {
             const isDark = document.body.classList.toggle('dark');
             localStorage.setItem('edy_theme', isDark ? 'dark' : 'light');
