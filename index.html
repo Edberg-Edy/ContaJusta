@@ -51,8 +51,7 @@
         .card-title { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
         .card-value { font-size: 24px; font-weight: bold; }
 
-        .senior-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-        @media(max-width: 768px) { .senior-dashboard { grid-template-columns: 1fr; } }
+        .senior-dashboard { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
         .progress-bar-container { background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
         .progress-bar { height: 100%; transition: width 0.4s ease; }
 
@@ -98,7 +97,6 @@
         .auth-tab { flex: 1; border: none; background: transparent; padding: 8px; font-weight: 600; color: var(--text-secondary); }
         .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); border-radius: 0; }
 
-        /* Estilização Geral de Modais */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
         .modal.active { display: flex; }
         .modal-body { background: var(--surface); padding: 24px; border-radius: var(--radius); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); position: relative; }
@@ -171,15 +169,8 @@
             </div>
         </div>
 
-        <!-- DASHBOARD VISÃO SÊNIOR -->
+        <!-- DASHBOARD VISÃO SÊNIOR (APENAS CONTROLE DE TETO) -->
         <div class="senior-dashboard">
-            <div class="card">
-                <div class="card-title"><i class="fa-solid fa-shield-halved"></i> Eficiência de Caixa (Margem Restante)</div>
-                <div class="card-value" id="seniorMargemTxt" style="font-size: 20px; margin-top: 5px;">0%</div>
-                <div class="progress-bar-container">
-                    <div id="seniorMargemBar" class="progress-bar" style="width: 0%; background-color: var(--primary);"></div>
-                </div>
-            </div>
             <div class="card">
                 <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Execução Consolidada do Teto de Despesas</div>
                 <div class="card-value" id="seniorTetoTxt" style="font-size: 20px; margin-top: 5px;">0%</div>
@@ -213,7 +204,7 @@
         <div class="main-layout">
             <!-- COLUNA DA ESQUERDA -->
             <div>
-                <!-- FORMULÁRIO OPERAÇÃO FIXO (PARA NOVOS LANÇAMENTOS) -->
+                <!-- FORMULÁRIO OPERAÇÃO FIXO -->
                 <div class="panel">
                     <div class="panel-title"><i class="fa-solid fa-circle-plus"></i> Nova Operação</div>
                     <form onsubmit="registrarFluxo(event, 'novo')">
@@ -289,7 +280,7 @@
         </div>
     </div>
 
-    <!-- WINDOW MODAL: JANELA FLUTUANTE PARA EDIÇÃO -->
+    <!-- JANELA FLUTUANTE PARA EDIÇÃO -->
     <div class="modal" id="modalEdicao">
         <div class="modal-body">
             <div class="panel-title" style="justify-content:space-between; margin-bottom: 20px;">
@@ -430,8 +421,8 @@
                     planejamento = data.planejamento || {};
                     if(data.categorias) categorias = data.categorias;
                 }
-                if(categorias.income) categorias.income.sort();
-                if(categorias.expense) categorias.expense.sort();
+                if(categorias.income) { categorias.income = categorias.income.filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'})); }
+                if(categorias.expense) { categorias.expense = categorias.expense.filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'})); }
                 atualizarTela();
             });
         }
@@ -454,7 +445,6 @@
             }
         }
 
-        // Atualiza dinamicamente as categorias de acordo com o escopo (novo ou edição)
         function atualizarSeletoresForm(prefixo) {
             const idTipo = prefixo === 'edicao' ? 'editTxType' : 'txType';
             const idCat = prefixo === 'edicao' ? 'editTxCategory' : 'txCategory';
@@ -535,12 +525,7 @@
             }
             document.getElementById('cardInvestment').innerText = formatarMoeda(plan.savings || 0);
 
-            // GESTÃO SÊNIOR
-            let pctMargem = 0;
-            if (totalInc > 0) pctMargem = Math.max(0, (saldo / totalInc) * 100);
-            document.getElementById('seniorMargemTxt').innerText = `${pctMargem.toFixed(1)}% (${formatarMoeda(saldo)} livre)`;
-            document.getElementById('seniorMargemBar').style.width = `${Math.min(100, pctMargem)}%`;
-
+            // GESTÃO DO TETO
             const tetoDefinido = plan.expense || 0;
             if (tetoDefinido > 0) {
                 const pctTeto = (totalExp / tetoDefinido) * 100;
@@ -628,7 +613,6 @@
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
         }
 
-        // GATILHO PARA ABRIR A JANELA FLUTUANTE DE EDIÇÃO
         function prepararEdicao(id) {
             const item = lancamentos.find(x => x.id === id);
             if(!item) return;
@@ -642,7 +626,6 @@
             document.getElementById('editTxDescription').value = item.description;
             document.getElementById('editTxAmount').value = item.amount;
 
-            // Mostra o Modal Centralizado na tela
             document.getElementById('modalEdicao').classList.add('active');
         }
 
@@ -653,7 +636,6 @@
         function registrarFluxo(e, modo) {
             e.preventDefault();
             
-            // Define de quais inputs ler baseado em onde veio o envio (do painel fixo ou do modal flutuante)
             const id = modo === 'edicao' ? document.getElementById('editTxId').value : null;
             const dataInput = modo === 'edicao' ? document.getElementById('editTxDate').value : document.getElementById('txDate').value;
             const type = modo === 'edicao' ? document.getElementById('editTxType').value : document.getElementById('txType').value;
@@ -664,19 +646,15 @@
             const dadosOperacao = { date: dataInput, type, category, description, amount };
 
             if(id) {
-                // Modo Edição
                 const index = lancamentos.findIndex(x => x.id === id);
                 if(index !== -1) lancamentos[index] = { id, ...dadosOperacao };
                 fecharModalEdicao();
             } else {
-                // Modo Novo Lançamento
                 const tx = {
                     id: 'tx_' + Date.now() + Math.random().toString(36).substr(2, 4),
                     ...dadosOperacao
                 };
                 lancamentos.push(tx);
-                
-                // Limpa apenas o formulário fixo da esquerda
                 document.getElementById('txDescription').value = '';
                 document.getElementById('txAmount').value = '';
             }
@@ -747,10 +725,18 @@
             if(!nameInput) return;
             const name = nameInput.value.trim();
             if(!name) return;
-            if(categorias[currentCatTab].includes(name)) { alert('Esta categoria já existe!'); return; }
+            
+            if(categorias[currentCatTab].some(c => c.toLowerCase() === name.toLowerCase())) { 
+                alert('Esta categoria já existe!'); 
+                return; 
+            }
+            
+            // Adiciona e ordena imediatamente em ordem alfabética local de forma sênior
             categorias[currentCatTab].push(name);
-            categorias[currentCatTab].sort(); 
+            categorias[currentCatTab] = categorias[currentCatTab].filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'}));
+            
             nameInput.value = '';
+            atualizarTela();
             saveToCloud();
         }
 
@@ -758,15 +744,21 @@
             const newName = prompt(`Mudar o nome da categoria "${oldName}" para:`, oldName);
             if(!newName || newName.trim() === "" || oldName === newName.trim()) return;
             const trimmed = newName.trim();
-            if(categorias[currentCatTab].includes(trimmed)) { alert('Uma categoria com este nome já existe!'); return; }
+            
+            if(categorias[currentCatTab].some(c => c.toLowerCase() === trimmed.toLowerCase() && c !== oldName)) { 
+                alert('Uma categoria com este nome já existe!'); 
+                return; 
+            }
             
             const idx = categorias[currentCatTab].indexOf(oldName);
             if(idx !== -1) {
                 categorias[currentCatTab][idx] = trimmed;
-                categorias[currentCatTab].sort();
+                categorias[currentCatTab] = categorias[currentCatTab].filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'}));
+                
                 lancamentos.forEach(l => {
                     if(l.type === currentCatTab && l.category === oldName) l.category = trimmed;
                 });
+                atualizarTela();
                 saveToCloud();
             }
         }
@@ -774,6 +766,7 @@
         function removerCategoria(name) {
             if(confirm(`Remover a categoria "${name}"? Lançamentos existentes manterão este nome.`)) {
                 categorias[currentCatTab] = categorias[currentCatTab].filter(x => x !== name);
+                atualizarTela();
                 saveToCloud();
             }
         }
@@ -784,7 +777,6 @@
         }
         if(localStorage.getItem('edy_theme') === 'dark') document.body.classList.add('dark');
 
-        // Fechar modais ao clicar fora da área deles
         document.addEventListener("click", function(e) {
             if (e.target === document.getElementById('modalCategorias')) closeCategoriesModal();
             if (e.target === document.getElementById('modalEdicao')) fecharModalEdicao();
