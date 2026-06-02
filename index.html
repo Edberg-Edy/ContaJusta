@@ -50,6 +50,7 @@
         .card { background: var(--surface); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .card-title { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
         .card-value { font-size: 24px; font-weight: bold; }
+        .card-subtext { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
         .senior-dashboard { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
         .progress-bar-container { background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
@@ -165,11 +166,12 @@
             </div>
             <div class="card" style="border-left: 4px solid var(--warning);">
                 <div class="card-title">Meta Investimento</div>
-                <div class="card-value" id="cardInvestment" style="color:var(--warning);">R$ 0,00</div>
+                <div class="card-value" id="cardInvestment" style="color:var(--warning);">0%</div>
+                <div class="card-subtext" id="cardInvestmentSub">R$ 0,00 aplicado</div>
             </div>
         </div>
 
-        <!-- DASHBOARD VISÃO SÊNIOR (APENAS CONTROLE DE TETO) -->
+        <!-- DASHBOARD VISÃO SÊNIOR (CONTROLE DE TETO) -->
         <div class="senior-dashboard">
             <div class="card">
                 <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Execução Consolidada do Teto de Despesas</div>
@@ -471,7 +473,7 @@
             const filtered = lancamentos.filter(x => x.date.startsWith(mes));
             filtered.sort((a,b) => b.date.localeCompare(a.date));
 
-            let totalInc = 0; let totalExp = 0;
+            let totalInc = 0; let totalExp = 0; let totalInvestidoReal = 0;
             let catExpTotals = {}; let catIncTotals = {};
 
             const tbody = document.getElementById('tableBody');
@@ -488,6 +490,12 @@
                 } else {
                     totalExp += item.amount;
                     catExpTotals[item.category] = (catExpTotals[item.category] || 0) + item.amount;
+                    
+                    // Contabiliza se for despesa e pertencer à categoria de investimento
+                    const catLower = item.category ? item.category.toLowerCase() : '';
+                    if(catLower === 'investimento' || catLower === 'investimentos') {
+                        totalInvestidoReal += item.amount;
+                    }
                 }
 
                 const partesData = item.date.split('-');
@@ -523,7 +531,17 @@
                 document.getElementById('planExpense').value = plan.expense || '';
                 document.getElementById('planSavings').value = plan.savings || '';
             }
-            document.getElementById('cardInvestment').innerText = formatarMoeda(plan.savings || 0);
+
+            // CÁLCULO DINÂMICO DO CARD DE META DE INVESTIMENTOS
+            const metaInvestimento = plan.savings || 0;
+            if (metaInvestimento > 0) {
+                const pctInvestido = (totalInvestidoReal / metaInvestimento) * 100;
+                document.getElementById('cardInvestment').innerText = `${pctInvestido.toFixed(0)}%`;
+                document.getElementById('cardInvestmentSub').innerText = `${formatarMoeda(totalInvestidoReal)} de ${formatarMoeda(metaInvestimento)}`;
+            } else {
+                document.getElementById('cardInvestment').innerText = `0%`;
+                document.getElementById('cardInvestmentSub').innerText = `${formatarMoeda(totalInvestidoReal)} aplicado`;
+            }
 
             // GESTÃO DO TETO
             const tetoDefinido = plan.expense || 0;
@@ -731,7 +749,6 @@
                 return; 
             }
             
-            // Adiciona e ordena imediatamente em ordem alfabética local de forma sênior
             categorias[currentCatTab].push(name);
             categorias[currentCatTab] = categorias[currentCatTab].filter(x => x).sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity: 'base'}));
             
