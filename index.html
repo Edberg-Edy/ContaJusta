@@ -37,12 +37,13 @@
         }
 
         * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, sans-serif; }
-        body { background: var(--background); color: var(--text); transition: background 0.3s, color 0.3s; padding: 20px; }
+        body { background: var(--background); color: var(--text); transition: background 0.3s, color 0.3s; padding: 16px; }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-        .logo { font-size: 24px; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        .controls { display: flex; align-items: center; gap: 12px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+        .logo { font-size: 22px; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; justify-content: space-between; }
+        @media(min-width: 768px) { .controls { width: auto; } }
 
         button, input, select { padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; cursor: pointer; }
         button.btn-p { background: var(--primary); color: white; border: none; font-weight: 500; }
@@ -98,8 +99,8 @@
         .badge.inc { background: rgba(16, 185, 129, 0.1); color: var(--success); }
         .badge.exp { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
 
-        #authScreen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--background); z-index: 999; }
-        .auth-card { background: var(--surface); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border); width: 100%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        #authScreen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--background); z-index: 999; padding: 16px; }
+        .auth-card { background: var(--surface); padding: 24px; border-radius: var(--radius); border: 1px solid var(--border); width: 100%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .auth-tab { flex: 1; border: none; background: transparent; padding: 8px; font-weight: 600; color: var(--text-secondary); }
         .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); border-radius: 0; }
@@ -110,6 +111,25 @@
 
         .cat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
         .btn-table-actions { display: flex; gap: 4px; justify-content: center; }
+
+        /* REGRAS EXCLUSIVAS PARA ADAPTAÇÃO TOTAL NO CELULAR (SEM ROLAGEM LATERAL) */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            header { gap: 8px; margin-bottom: 16px; }
+            .logo { font-size: 20px; width: 100%; justify-content: center; }
+            .controls { justify-content: center; gap: 6px; }
+            .controls input[type="month"] { flex-grow: 1; text-align: center; }
+            
+            /* Transforma a tabela em formato de lista/cards individuais */
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin-bottom: 10px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+            td { border: none; padding: 6px 4px; text-align: left !important; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+            td::before { content: attr(data-label); font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+            td:last-child { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 10px; justify-content: center; }
+            .btn-table-actions { width: 100%; gap: 10px; }
+            .btn-table-actions button { flex: 1; padding: 8px; }
+        }
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -146,12 +166,12 @@
         <header>
             <div class="logo"><i class="fa-solid fa-wallet"></i> Finanças do Edy</div>
             <div class="controls">
-                <span id="userDisplay" style="font-size:13px; color:var(--text-secondary);"></span>
+                <span id="userDisplay" style="font-size:13px; color:var(--text-secondary); display:none;"></span>
                 <input type="month" id="mesFiltro" onchange="loadUserData()">
                 <button onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
-                <button onclick="toggleCharts()"><i class="fa-solid fa-chart-pie"></i> Gráficos</button>
-                <button onclick="openCategoriesModal()"><i class="fa-solid fa-tags"></i> Categorias</button>
-                <button class="btn-p" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf"></i> Baixar PDF</button>
+                <button onclick="toggleCharts()"><i class="fa-solid fa-chart-pie"></i></button>
+                <button onclick="openCategoriesModal()"><i class="fa-solid fa-tags"></i></button>
+                <button class="btn-p" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf"></i></button>
                 <button class="btn-d" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </header>
@@ -180,7 +200,7 @@
         <!-- DASHBOARD VISÃO SÊNIOR (CONTROLE DE TETO) -->
         <div class="senior-dashboard">
             <div class="card">
-                <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Execução Consolidada do Teto de Despesas</div>
+                <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Execução do Teto de Despesas</div>
                 <div class="card-value" id="seniorTetoTxt" style="font-size: 20px; margin-top: 5px;">0%</div>
                 <div class="progress-bar-container">
                     <div id="seniorTetoBar" class="progress-bar" style="width: 0%; background-color: var(--success);"></div>
@@ -233,7 +253,7 @@
                         </div>
                         <div class="form-group">
                             <label>Descrição</label>
-                            <input type="text" id="txDescription" required placeholder="Ex: Mercado, Aluguel...">
+                            <input type="text" id="txDescription" required placeholder="Ex: Mercado... ">
                         </div>
                         <div class="form-group">
                             <label>Valor</label>
@@ -267,8 +287,8 @@
             <!-- COLUNA DA DIREITA: TABELA -->
             <div>
                 <div class="panel" id="pdfArea">
-                    <div class="panel-title"><i class="fa-solid fa-list"></i> Livro de Lançamentos Diários</div>
-                    <div style="overflow-x:auto;">
+                    <div class="panel-title"><i class="fa-solid fa-list"></i> Lançamentos Diários</div>
+                    <div style="overflow-x:hidden;">
                         <table>
                             <thead>
                                 <tr>
@@ -283,7 +303,7 @@
                         </table>
                     </div>
                 </div>
-                <button class="btn-d" onclick="limparDados()" style="float:right;"><i class="fa-solid fa-trash-can"></i> Expurgar Toda a Base de Dados</button>
+                <button class="btn-d" onclick="limparDados()" style="float:right; width:100%; margin-top: 10px;"><i class="fa-solid fa-trash-can"></i> Expurgar Toda a Base</button>
             </div>
         </div>
     </div>
@@ -341,7 +361,7 @@
             </div>
             <div style="display:flex; gap:8px; margin-bottom:16px;">
                 <input type="text" id="newCatName" placeholder="Nova categoria..." style="flex:1;">
-                <button class="btn-s" onclick="adicionarCategoria()">Adicionar</button>
+                <button class="btn-s" onclick="adicionarCategoria()">Add</button>
             </div>
             <div id="modalCategoriesList" style="max-height:250px; overflow-y:auto; padding-right:5px;"></div>
         </div>
@@ -497,7 +517,6 @@
                     totalExp += item.amount;
                     catExpTotals[item.category] = (catExpTotals[item.category] || 0) + item.amount;
                     
-                    // Contabiliza se for despesa e pertencer à categoria de investimento
                     const catLower = item.category ? item.category.toLowerCase() : '';
                     if(catLower === 'investimento' || catLower === 'investimentos') {
                         totalInvestidoReal += item.amount;
@@ -509,16 +528,16 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${dataFormatada}</td>
-                    <td><strong>${item.description}</strong></td>
-                    <td><span class="badge ${item.type === 'income' ? 'inc' : 'exp'}">${item.category}</span></td>
-                    <td style="text-align:right; font-weight:700; color:var(--${item.type === 'income' ? 'success' : 'danger'})">
+                    <td data-label="Data">${dataFormatada}</td>
+                    <td data-label="Descrição"><strong>${item.description}</strong></td>
+                    <td data-label="Categoria"><span class="badge ${item.type === 'income' ? 'inc' : 'exp'}">${item.category}</span></td>
+                    <td data-label="Valor" style="text-align:right; font-weight:700; color:var(--${item.type === 'income' ? 'success' : 'danger'})">
                         ${formatarMoeda(item.amount)}
                     </td>
-                    <td style="text-align:center;" class="no-pdf">
+                    <td class="no-pdf">
                         <div class="btn-table-actions">
-                            <button onclick="prepararEdicao('${item.id}')" style="padding:4px 8px; font-size:12px;" class="btn-p"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deletarLancamento('${item.id}')" style="padding:4px 8px; font-size:12px;" class="btn-d"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="prepararEdicao('${item.id}')" class="btn-p"><i class="fa-solid fa-pen"></i> Editar</button>
+                            <button onclick="deletarLancamento('${item.id}')" class="btn-d"><i class="fa-solid fa-trash"></i> Excluir</button>
                         </div>
                     </td>
                 `;
@@ -538,7 +557,6 @@
                 document.getElementById('planSavings').value = plan.savings || '';
             }
 
-            // CÁLCULO DINÂMICO DO CARD DE META DE INVESTIMENTOS
             const metaInvestimento = plan.savings || 0;
             if (metaInvestimento > 0) {
                 const pctInvestido = (totalInvestidoReal / metaInvestimento) * 100;
@@ -549,7 +567,6 @@
                 document.getElementById('cardInvestmentSub').innerText = `${formatarMoeda(totalInvestidoReal)} aplicado`;
             }
 
-            // GESTÃO DO TETO
             const tetoDefinido = plan.expense || 0;
             if (tetoDefinido > 0) {
                 const pctTeto = (totalExp / tetoDefinido) * 100;
@@ -560,21 +577,21 @@
                 const avisoTeto = document.getElementById('seniorTetoAviso');
                 if (pctTeto <= 80) {
                     barraTeto.style.backgroundColor = 'var(--success)';
-                    avisoTeto.innerHTML = "🟢 Dentro do limite seguro de controle.";
+                    avisoTeto.innerHTML = "🟢 Dentro do limite seguro.";
                     avisoTeto.style.color = 'var(--success)';
                 } else if (pctTeto <= 100) {
                     barraTeto.style.backgroundColor = 'var(--warning)';
-                    avisoTeto.innerHTML = "🟡 Zona de Atenção: Orçamento próximo do teto.";
+                    avisoTeto.innerHTML = "🟡 Zona de Atenção.";
                     avisoTeto.style.color = 'var(--warning)';
                 } else {
                     barraTeto.style.backgroundColor = 'var(--danger)';
-                    avisoTeto.innerHTML = "🔴 Risco Orçamentário: Teto estourado!";
+                    avisoTeto.innerHTML = "🔴 Risco Orçamentário: Estourado!";
                     avisoTeto.style.color = 'var(--danger)';
                 }
             } else {
                 document.getElementById('seniorTetoTxt').innerText = "R$ 0,00 planejado";
                 document.getElementById('seniorTetoBar').style.width = '0%';
-                document.getElementById('seniorTetoAviso').innerText = "Insira uma meta orçamentária para ativar o termômetro.";
+                document.getElementById('seniorTetoAviso').innerText = "Insira um teto para ativar o termômetro.";
                 document.getElementById('seniorTetoAviso').style.color = 'var(--text-secondary)';
             }
 
