@@ -87,3 +87,170 @@
         .panel-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         
         .form-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+        .form-group input, .form-group select { width: 100%; }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { color: var(--text-secondary); font-weight: 600; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; display: inline-block; }
+        .badge.inc { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .badge.exp { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        #authScreen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--background); z-index: 999; padding: 16px; }
+        .auth-card { background: var(--surface); padding: 24px; border-radius: var(--radius); border: 1px solid var(--border); width: 100%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .auth-tab { flex: 1; border: none; background: transparent; padding: 8px; font-weight: 600; color: var(--text-secondary); }
+        .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); border-radius: 0; }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+        .modal.active { display: flex; }
+        .modal-body { background: var(--surface); padding: 24px; border-radius: var(--radius); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); position: relative; }
+
+        .cat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .btn-table-actions { display: flex; gap: 4px; justify-content: center; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            header { gap: 8px; margin-bottom: 16px; }
+            .logo { font-size: 20px; width: 100%; justify-content: center; }
+            .controls { justify-content: center; gap: 6px; }
+            .controls input[type="month"] { flex-grow: 1; text-align: center; }
+            
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin-bottom: 10px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+            td { border: none; padding: 6px 4px; text-align: left !important; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+            td::before { content: attr(data-label); font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+            td:last-child { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 10px; justify-content: center; }
+            .btn-table-actions { width: 100%; gap: 10px; }
+            .btn-table-actions button { flex: 1; padding: 8px; }
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+    <div id="authScreen">
+        <div class="auth-card">
+            <h2 style="margin-bottom:20px; text-align:center; color:var(--primary);">Finanças do Edy</h2>
+            <div class="auth-tabs">
+                <button id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Acessar</button>
+                <button id="tabRegister" class="auth-tab" onclick="switchAuthTab('register')">Cadastrar</button>
+            </div>
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="authEmail" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="authPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-p" id="btnAuthSubmit" style="width:100%; margin-top:10px;">Entrar no Painel</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="mainApp" class="container" style="display:none;">
+        <header>
+            <div class="logo"><i class="fa-solid fa-wallet"></i> Finanças do Edy</div>
+            <div class="controls">
+                <input type="month" id="mesFiltro" onchange="setupRealtimeListeners()">
+                <button onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
+                <button onclick="toggleCharts()"><i class="fa-solid fa-chart-pie"></i></button>
+                <button onclick="openCategoriesModal()"><i class="fa-solid fa-tags"></i></button>
+                <button class="btn-p" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf"></i></button>
+                <button class="btn-d" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+        </header>
+
+        <div class="cards-grid">
+            <div class="card" style="border-left: 4px solid var(--success);">
+                <div class="card-title">Entrada Real</div>
+                <div class="card-value" id="cardIncome" style="color:var(--success);">R$ 0,00</div>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--danger);">
+                <div class="card-title">Saída Real</div>
+                <div class="card-value" id="cardExpense" style="color:var(--danger);">R$ 0,00</div>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--primary);">
+                <div class="card-title">Saldo Líquido</div>
+                <div class="card-value" id="cardBalance">R$ 0,00</div>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--warning);">
+                <div class="card-title">Meta Investimento</div>
+                <div class="card-value" id="cardInvestment" style="color:var(--warning);">0%</div>
+                <div class="card-subtext" id="cardInvestmentSub">R$ 0,00 aplicado</div>
+            </div>
+        </div>
+
+        <div class="senior-dashboard">
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-gauge-high"></i> Execução do Teto de Despesas</div>
+                <div class="card-value" id="seniorTetoTxt" style="font-size: 20px; margin-top: 5px;">0%</div>
+                <div class="progress-bar-container">
+                    <div id="seniorTetoBar" class="progress-bar" style="width: 0%; background-color: var(--success);"></div>
+                </div>
+                <small id="seniorTetoAviso" style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;"></small>
+            </div>
+        </div>
+
+        <div class="charts-wrapper" id="chartsWrapper">
+            <div class="charts-container">
+                <div class="chart-card" id="areaDespesasPizza">
+                    <div class="panel-title" style="font-size:14px; margin-bottom:5px; color:var(--text);"><i class="fa-solid fa-chart-pie"></i> Proporção de Despesas</div>
+                    <div class="pie-layout">
+                        <div class="pie-circle" id="pieExpenseCircle"></div>
+                        <div class="pie-legend" id="pieExpenseLegend"></div>
+                    </div>
+                </div>
+                <div class="chart-card" id="areaReceitasPizza">
+                    <div class="panel-title" style="font-size:14px; margin-bottom:5px; color:var(--text);"><i class="fa-solid fa-chart-pie"></i> Origem de Receitas</div>
+                    <div class="pie-layout">
+                        <div class="pie-circle" id="pieIncomeCircle"></div>
+                        <div class="pie-legend" id="pieIncomeLegend"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div>
+                <div class="panel">
+                    <div class="panel-title"><i class="fa-solid fa-circle-plus"></i> Nova Operação</div>
+                    <form onsubmit="registrarFluxo(event, 'novo')">
+                        <div class="form-group">
+                            <label>Data</label>
+                            <input type="date" id="txDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Natureza</label>
+                            <select id="txType" onchange="atualizarSeletoresForm('novo')" required>
+                                <option value="expense">Despesa</option>
+                                <option value="income">Receita</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <select id="txCategory" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <input type="text" id="txDescription" required placeholder="Ex: Mercado... ">
+                        </div>
+                        <div class="form-group">
+                            <label>Valor</label>
+                            <input type="number" step="0.01" id="txAmount" required placeholder="0,00">
+                        </div>
+                        <button type="submit" class="btn-s" style="width:100%;">Registrar</button>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <div class="panel
