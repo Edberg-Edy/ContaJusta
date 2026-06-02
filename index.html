@@ -2,23 +2,25 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Painel de Finanças</title>
-    <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; }
-        #loading { font-size: 1.2rem; color: #555; }
-        #app { display: none; width: 90%; max-width: 600px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    </style>
+    <title>Finanças do Edy</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f8fafc; }
+        #app { display: none; padding: 20px; }
+        .box { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+    </style>
 </head>
 <body>
 
-    <div id="loading">Carregando painel...</div>
     <div id="app">
-        <h1>Bem-vindo ao seu Painel</h1>
-        <p>Você está logado com sucesso.</p>
-        <button onclick="auth.signOut(); location.reload();">Sair</button>
+        <div class="box">
+            <h1>Painel de Finanças</h1>
+            <p>Seja bem-vindo de volta, Edy!</p>
+            <div id="status-banco">Conectando ao seu banco de dados...</div>
+            <button onclick="auth.signOut(); location.reload();" style="margin-top:20px;">Sair</button>
+        </div>
     </div>
 
     <script>
@@ -33,20 +35,27 @@
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        // Monitora o estado do usuário
-        auth.onAuthStateChanged((user) => {
-            const loading = document.getElementById('loading');
-            const app = document.getElementById('app');
-
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // Usuário logado: esconde o loading e mostra o app
-                loading.style.display = 'none';
-                app.style.display = 'block';
+                document.getElementById('app').style.display = 'block';
+                
+                // TESTE DE LEITURA DO BANCO
+                try {
+                    const doc = await db.collection('users').doc(user.uid).get();
+                    if (doc.exists) {
+                        document.getElementById('status-banco').innerText = "✅ Dados carregados com sucesso!";
+                        console.log("Categorias encontradas:", doc.data().categorias);
+                    } else {
+                        document.getElementById('status-banco').innerText = "⚠️ Logado, mas nenhum documento 'users' encontrado.";
+                    }
+                } catch (e) {
+                    document.getElementById('status-banco').innerText = "❌ Erro ao ler o banco: " + e.message;
+                }
             } else {
-                // Usuário deslogado: redireciona para a tela de login (que você tinha antes)
-                // Se você ainda não tem a tela, podemos construir aqui.
-                loading.innerText = "Você não está logado. Por favor, faça login.";
+                // Se não logado, recarrega para voltar à tela de login
+                location.reload();
             }
         });
     </script>
