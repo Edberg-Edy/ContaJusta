@@ -5,254 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>ContaJusta — Gestão de Grupos</title>
 
-  <style>
-    :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface-light: #334155;
-      --input-bg: #0f172a;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --line: rgba(148, 163, 184, 0.1);
-      --accent: #3b82f6;
-      --pos: #10b981;
-      --neg: #ef4444;
-      --chip: rgba(51, 65, 85, 0.5);
-      --radius: 16px;
-      --spacing: 20px;
-      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    header {
-      padding: 20px;
-      text-align: center;
-      background: var(--surface);
-      font-weight: 900;
-      font-size: 1.2rem;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .nav-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--line);
-    }
-
-    main {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: var(--spacing);
-    }
-
-    .section-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: var(--spacing);
-      margin-bottom: 30px;
-      align-items: start;
-    }
-
-    @media (min-width: 900px) {
-      .section-grid { grid-template-columns: 400px 1fr; }
-    }
-
-    .card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: var(--spacing);
-      border: 1px solid var(--line);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .section-title {
-      font-weight: 700;
-      margin: 24px 0 12px 0;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .hr { height: 1px; background: var(--line); margin: var(--spacing) 0; }
-
-    input, select {
-      width: 100%;
-      padding: 14px;
-      margin-top: 8px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--input-bg);
-      color: var(--text);
-      font-size: 16px; /* Evita zoom no iOS */
-      outline: none;
-      transition: var(--transition);
-    }
-
-    input:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 10px;
-      border: none;
-      border-radius: var(--radius);
-      background: var(--accent);
-      color: white;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 14px;
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    button:hover { filter: brightness(1.1); transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
-    button.secondary { background: var(--surface-light); }
-    button.danger { background: var(--neg); }
-    button.success { background: var(--pos); }
-
-    button.icon {
-      width: 40px;
-      height: 40px;
-      padding: 0;
-      margin-top: 0;
-      border-radius: 12px;
-    }
-
-    .small { font-size: 13px; color: var(--muted); }
-
-    .kpi-container {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    @media (min-width: 600px) { .kpi-container { grid-template-columns: repeat(2, 1fr); } }
-
-    .kpi-box {
-      background: var(--surface-light);
-      padding: 20px;
-      border-radius: var(--radius);
-      border-left: 4px solid var(--accent);
-    }
-
-    .kpi-label { font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-    .kpi-value { font-size: 1.5rem; font-weight: 800; margin-top: 4px; color: var(--text); }
-
-    .item {
-      background: var(--surface);
-      padding: 16px;
-      border-radius: var(--radius);
-      margin-top: 12px;
-      border: 1px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      transition: var(--transition);
-    }
-    @media (min-width: 600px) { .item { flex-direction: row; align-items: center; justify-content: space-between; } }
-
-    .item .title { font-weight: 700; font-size: 16px; }
-    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
-    .badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--chip); color: var(--muted); }
-    .pos { color: var(--pos); }
-    .neg { color: var(--neg); }
-    .mono { font-family: 'Courier New', Courier, monospace; letter-spacing: -0.5px; }
-    
-    .trend-indicator {
-      margin-top: 16px;
-      padding: 16px;
-      border-radius: var(--radius);
-      background: rgba(59, 130, 246, 0.05);
-      border: 1px dashed var(--accent);
-      font-size: 13px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    @media (min-width: 600px) { .trend-indicator { flex-direction: row; justify-content: space-between; align-items: center; } }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(2, 6, 23, 0.85);
-      backdrop-filter: blur(8px);
-      display: none;
-      justify-content: center;
-      align-items: flex-end;
-      z-index: 1000;
-      padding: 10px;
-    }
-    @media (min-width: 600px) { .modal-overlay { align-items: center; } }
-
-    .modal-content {
-      background: var(--surface);
-      padding: 24px;
-      border-radius: 24px 24px 0 0;
-      width: 100%;
-      max-width: 500px;
-      border: 1px solid var(--line);
-      animation: slideUp 0.3s ease-out;
-    }
-    @media (min-width: 600px) {
-      .modal-content { border-radius: 24px; margin-bottom: 0; }
-    }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-    .list-actions {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-    }
-
-    .group-card {
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: var(--transition);
-    }
-    .group-card:hover { border-color: var(--accent); }
-    
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--muted);
-    }
-
-    .hidden { display: none !important; }
-    
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header id="mainHeader">CONTAJUSTA</header>
-  
+
   <div id="navBar" class="nav-bar hidden">
     <button onclick="exitGroup()" class="secondary" style="width: auto; margin-top: 0; padding: 8px 16px;">
       ← Voltar aos Grupos
@@ -274,72 +31,71 @@
 
     <!-- VIEW: GROUP DETAIL -->
     <div id="viewDetail" class="hidden">
-    <!-- Top Summary -->
-    <div class="card" style="margin-bottom: var(--spacing);">
-      <div class="section-title">📊 Dashboard do Grupo</div>
-      
-      <div class="dashboard-grid">
-        <div class="kpi-box">
-          <div class="kpi-label">Total Gasto</div>
-          <div id="kpiTotal" class="kpi-value mono">R$ 0,00</div>
+      <!-- Top Summary -->
+      <div class="card" style="margin-bottom: var(--spacing);">
+        <div class="section-title">📊 Dashboard do Grupo</div>
+
+        <div class="dashboard-grid">
+          <div class="kpi-box">
+            <div class="kpi-label">Total Gasto</div>
+            <div id="kpiTotal" class="kpi-value mono">R$ 0,00</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Média/Membro</div>
+            <div id="kpiAvg" class="kpi-value mono">R$ 0,00</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Membros</div>
+            <div id="kpiResidents" class="kpi-value mono" style="font-size: 1.1rem;">0</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-label">Despesas</div>
+            <div id="kpiExpensesCount" class="kpi-value mono" style="font-size: 1.1rem;">0</div>
+          </div>
         </div>
-        <div class="kpi-box">
-          <div class="kpi-label">Média/Membro</div>
-          <div id="kpiAvg" class="kpi-value mono">R$ 0,00</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-label">Membros</div>
-          <div id="kpiResidents" class="kpi-value mono" style="font-size: 1.1rem;">0</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-label">Despesas</div>
-          <div id="kpiExpensesCount" class="kpi-value mono" style="font-size: 1.1rem;">0</div>
+
+        <div id="summary" class="small">Adicione moradores para começar.</div>
+        <div id="monthlyComparison"></div>
+        <div class="hr"></div>
+
+        <div style="margin-top: 15px;">
+          <div class="small" style="margin-bottom: 8px;">Adicionar Morador</div>
+          <div style="display: flex; gap: 8px;">
+            <input id="name" placeholder="Novo morador..." style="margin-top:0" />
+            <button onclick="addOrSaveResident()" class="success" style="margin-top:0; width: 60px;">+</button>
+          </div>
         </div>
       </div>
 
-      <div id="summary" class="small">Adicione moradores para começar.</div>
-      
-      <div id="monthlyComparison"></div>
-      
-      <div class="hr"></div>
-      
-      <div style="margin-top: 15px;">
-        <div class="small" style="margin-bottom: 8px;">Adicionar Morador</div>
-        <div style="display: flex; gap: 8px;">
-          <input id="name" placeholder="Novo morador..." style="margin-top:0" />
-          <button onclick="addOrSaveResident()" class="success" style="margin-top:0; width: 60px;">+</button>
+      <!-- Expenses Section -->
+      <div class="section-title">🧾 Gestão de Despesas</div>
+      <div class="section-grid">
+        <div class="card" style="position: sticky; top: 20px;">
+          <div class="small">Cadastrar novo gasto</div>
+          <input id="desc" placeholder="Descrição" />
+          <input id="value" type="number" step="0.01" placeholder="Valor (R$)" />
+          <select id="paidBy" aria-label="Quem pagou?"></select>
+          <div style="margin-top: 10px;">
+            <div class="small">Data do gasto</div>
+            <input id="expenseDate" type="date" />
+          </div>
+          <button id="btnSaveExpense" onclick="addOrSaveExpense()">Salvar Lançamento</button>
         </div>
+        <div id="expenses"></div>
       </div>
-    </div>
 
-    <!-- Expenses Section -->
-    <div class="section-title">🧾 Gestão de Despesas</div>
-    <div class="section-grid">
-      <div class="card" style="position: sticky; top: 20px;">
-        <div class="small">Cadastrar novo gasto</div>
-        <input id="desc" placeholder="Descrição" />
-        <input id="value" type="number" step="0.01" placeholder="Valor (R$)" />
-        <select id="paidBy" aria-label="Quem pagou?"></select>
-        <div style="margin-top: 10px;">
-          <div class="small">Data do gasto</div>
-          <input id="expenseDate" type="date" />
+      <!-- Settlements Section -->
+      <div class="section-title">🤝 Gestão de Acertos</div>
+      <div class="section-grid">
+        <div class="card">
+          <div class="small">Registrar transferência</div>
+          <select id="from" aria-label="Quem paga?"></select>
+          <select id="to" aria-label="Quem recebe?"></select>
+          <input id="amount" type="number" step="0.01" placeholder="Valor do acerto" />
+          <button id="btnSaveSettlement" class="success" onclick="addOrSaveSettlement()">Confirmar Envio</button>
         </div>
-        <button id="btnSaveExpense" onclick="addOrSaveExpense()">Salvar Lançamento</button>
+        <div id="settlements"></div>
       </div>
-      <div id="expenses"></div>
-    </div>
-
-    <!-- Settlements Section -->
-    <div class="section-title">🤝 Gestão de Acertos</div>
-    <div class="section-grid">
-      <div class="card">
-        <div class="small">Registrar transferência</div>
-        <select id="from" aria-label="Quem paga?"></select>
-        <select id="to" aria-label="Quem recebe?"></select>
-        <input id="amount" type="number" step="0.01" placeholder="Valor do acerto" />
-        <button id="btnSaveSettlement" class="success" onclick="addOrSaveSettlement()">Confirmar Envio</button>
-      </div>
-      <div id="settlements"></div>
     </div>
   </main>
 
@@ -357,563 +113,15 @@
     </div>
   </div>
 
-<script>
-  // --- STATE MANAGEMENT ---
-  let state = JSON.parse(localStorage.getItem('contajusta_state')) || {
-    groups: [],
-    activeGroupId: null
-  };
-
-  let editing = { residentIndex: null, expenseIndex: null, settlementIndex: null, groupIndex: null };
-
-  function getActiveGroup() {
-    return state.groups.find(g => g.id === state.activeGroupId);
-  }
-
-  function save(){
-    localStorage.setItem('contajusta_state', JSON.stringify(state));
-    render();
-  }
-
-  // --- DATE HELPER ---
-  const today = () => new Date().toISOString().split('T')[0];
-  
-  // ---------------- HELPERS ----------------
-  function money(n){
-    const v = Number(n || 0);
-    return `R$ ${v.toFixed(2).replace('.', ',')}`;
-  }
-
-  function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'<','>':'>','"':'"',"'":'&#039;'}[s]));
-  }
-
-  function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
-  }
-
-  // ---------------- MODAL LOGIC ----------------
-  function openModal(title, bodyHtml, onConfirm) {
-    document.getElementById('modalTitle').textContent = title;
-    document.getElementById('modalBody').innerHTML = bodyHtml;
-    document.getElementById('editModal').style.display = 'flex';
-    document.getElementById('modalConfirmBtn').onclick = () => {
-      onConfirm();
-      closeModal();
-    };
-  }
-
-  function closeModal() {
-    document.getElementById('editModal').style.display = 'none';
-    editing = { residentIndex: null, expenseIndex: null, settlementIndex: null, groupIndex: null };
-  }
-
-  // ---------------- GROUPS ----------------
-  function startCreateGroup() {
-    const html = `
-      <div class="small">Nome do Grupo</div>
-      <input id="modal_group_name" placeholder="Ex: Viagem de Verão" />
-      <div class="small" style="margin-top:10px">Descrição (opcional)</div>
-      <input id="modal_group_desc" placeholder="Objetivo do grupo..." />
-    `;
-    openModal("Criar Novo Grupo", html, () => {
-      const name = document.getElementById('modal_group_name').value.trim();
-      const description = document.getElementById('modal_group_desc').value.trim();
-      if (!name) return;
-      
-      const newGroup = {
-        id: generateId(),
-        name,
-        description,
-        createdAt: new Date().toISOString(),
-        residents: [],
-        expenses: [],
-        settlements: [],
-        history: []
-      };
-      state.groups.push(newGroup);
-      save();
-    });
-  }
-
-  function startEditGroup(idx, e) {
-    e.stopPropagation();
-    const g = state.groups[idx];
-    const html = `
-      <div class="small">Nome do Grupo</div>
-      <input id="modal_group_name" value="${escapeHtml(g.name)}" />
-      <div class="small" style="margin-top:10px">Descrição</div>
-      <input id="modal_group_desc" value="${escapeHtml(g.description || '')}" />
-    `;
-    openModal("Editar Grupo", html, () => {
-      g.name = document.getElementById('modal_group_name').value.trim();
-      g.description = document.getElementById('modal_group_desc').value.trim();
-      save();
-    });
-  }
-
-  function removeGroup(idx, e) {
-    e.stopPropagation();
-    if(!confirm("Excluir este grupo e todos os seus dados permanentemente?")) return;
-    if(state.groups[idx].id === state.activeGroupId) state.activeGroupId = null;
-    state.groups.splice(idx, 1);
-    save();
-  }
-
-  function selectGroup(id) {
-    state.activeGroupId = id;
-    // Resetar campos de data para o dia atual ao trocar de grupo
-    // Melhoria lógica: Garantir preenchimento automático sem mudar layout
-    setTimeout(() => {
-        const ed = document.getElementById('expenseDate');
-        const sd = document.getElementById('settlementDate');
-        if(ed) ed.value = today();
-        if(sd) sd.value = today();
-    }, 10);
-    save();
-  }
-
-  function exitGroup() {
-    state.activeGroupId = null;
-    save();
-  }
-  
-  // ---------------- RESIDENTS ----------------
-  function addOrSaveResident(){
-    let name = "";
-    if (editing.residentIndex !== null) {
-      name = document.getElementById('modal_res_name').value.trim();
-    } else {
-      name = document.getElementById('name').value.trim();
-    }
-    
-    processResident(name);
-  }
-
-  function processResident(name) {
-    const group = getActiveGroup();
-    if(!name) return;
-
-    if(editing.residentIndex === null){
-      if(group.residents.some(r => r.name === name)) return;
-      // Preparação para futura sincronização adicionando ID único internamente
-      group.residents.push({ id: generateId(), name });
-    } else {
-      group.residents[editing.residentIndex] = { name };
-      editing.residentIndex = null;
-    }
-    
-    group.residents.sort((a, b) => a.name.localeCompare(b.name));
-    document.getElementById('name').value = '';
-    save();
-  }
-
-  function startEditResident(index, e) {
-    if(e) e.stopPropagation();
-    const group = getActiveGroup();
-    editing.residentIndex = index;
-    const r = group.residents[index];
-    const html = `
-      <div class="small">Nome do morador</div>
-      <input id="modal_res_name" value="${escapeHtml(r.name)}" />
-    `;
-    openModal("Editar Morador", html, () => {
-      const newName = document.getElementById('modal_res_name').value.trim();
-      processResident(newName);
-    });
-  }
-
-  function removeResident(index, e){
-    if(e) e.stopPropagation();
-    const group = getActiveGroup();
-    const r = group.residents[index];
-    if(!confirm(`Remover morador "${r.name}"? Isso também remove despesas e acertos relacionados.`)) return;
-
-    const name = r.name;
-    group.residents.splice(index, 1);
-    group.expenses = group.expenses.filter(e => e.paidBy !== name);
-    group.settlements = group.settlements.filter(s => s.from !== name && s.to !== name);
-
-    if(editing.residentIndex === index){
-      editing.residentIndex = null;
-      document.getElementById('name').value = '';
-    }
-
-    save();
-  }
-
-  function archiveMonth() {
-    const group = getActiveGroup();
-    const c = calculate();
-    if (c.total === 0) {
-      alert("Não há gastos para arquivar neste mês.");
-      return;
-    }
-
-    if (!confirm("Isso irá limpar todas as despesas e acertos atuais para iniciar um novo mês. O total será salvo no histórico. Continuar?")) return;
-
-    const monthLabel = new Date().toLocaleDateString('pt-br', { month: 'long', year: 'numeric' });
-    
-    group.history.push({
-      date: monthLabel,
-      total: c.total,
-      residentsCount: group.residents.length
-    });
-
-    // Limpa transações mas mantém moradores
-    group.expenses = [];
-    group.settlements = [];
-
-    save();
-  }
-
-  // ---------------- EXPENSES ----------------
-  function updateExpenseSelectOptions(){
-    const group = getActiveGroup();
-    if (!group) return;
-    const residents = group.residents || [];
-    const memberOpts = residents.map(r => `<option value="${escapeHtml(r.name)}">${escapeHtml(r.name)}</option>`).join('');
-    
-    document.getElementById('paidBy').innerHTML = `<option value="" disabled selected>Quem pagou?</option>` + memberOpts;
-    document.getElementById('from').innerHTML = `<option value="" disabled selected>Quem Paga</option>` + memberOpts;
-    document.getElementById('to').innerHTML = `<option value="" disabled selected>Quem Recebe</option>` + memberOpts;
-
-    // Garante que a data do gasto seja preenchida com o dia atual se estiver vazia
-    const ed = document.getElementById('expenseDate');
-    if (ed && !ed.value) ed.value = today();
-  }
-
-  function addOrSaveExpense(){
-    const group = getActiveGroup();
-    const d = document.getElementById('desc');
-    const v = document.getElementById('value');
-    const p = document.getElementById('paidBy');
-    const dt = document.getElementById('expenseDate');
-
-    const desc = d.value.trim();
-    const value = +v.value;
-    const paidBy = p.value;
-    const date = dt.value || today();
-
-    if(!desc || !pied(paidBy) || !Number.isFinite(value) || value <= 0) return;
-
-    if(editing.expenseIndex === null){
-      group.expenses.push({ desc, value, paidBy, date });
-    } else {
-      group.expenses[editing.expenseIndex] = { desc, value, paidBy, date };
-      editing.expenseIndex = null;
-    }
-    d.value = ''; v.value = ''; p.value = ''; dt.value = '';
-    save();
-  }
-
-  function pied(x){
-    return !!x && String(x).trim() !== '';
-  }
-
-  function startEditExpense(index){
-    const group = getActiveGroup();
-    editing.expenseIndex = index;
-    const e = group.expenses[index];
-    const residents = group.residents;
-    const opt = residents.map(r => `<option value="${escapeHtml(r.name)}" ${r.name === e.paidBy ? 'selected' : ''}>${escapeHtml(r.name)}</option>`).join('');
-    
-    const html = `
-      <div class="small">Descrição</div><input id="modal_exp_desc" value="${escapeHtml(e.desc)}" />
-      <div class="small">Valor</div><input id="modal_exp_val" type="number" step="0.01" value="${e.value}" />
-      <div class="small">Data</div><input id="modal_exp_date" type="date" value="${e.date || today()}" />
-      <div class="small">Pago por</div><select id="modal_exp_who">${opt}</select>
-    `;
-    openModal("Editar Despesa", html, () => {
-      processExpense(
-        document.getElementById('modal_exp_desc').value.trim(),
-        +document.getElementById('modal_exp_val').value,
-        document.getElementById('modal_exp_who').value
-      , document.getElementById('modal_exp_date').value);
-    });
-  }
-
-  function processExpense(desc, value, paidBy, date) {
-      const group = getActiveGroup();
-      group.expenses[editing.expenseIndex] = { desc, value, paidBy, date };
-      editing.expenseIndex = null;
-      save();
-  }
-
-  function removeExpense(index){
-    const group = getActiveGroup();
-    if(!confirm('Remover despesa?')) return;
-    group.expenses.splice(index, 1);
-    if(editing.expenseIndex === index) editing.expenseIndex = null;
-    save();
-  }
-
-  // ---------------- SETTLEMENTS ----------------
-  function addOrSaveSettlement(){
-    let from, to, value, date;
-
-    if (editing.settlementIndex !== null) {
-      from = document.getElementById('modal_set_from').value;
-      to = document.getElementById('modal_set_to').value;
-      value = +document.getElementById('modal_set_val').value;
-      
-      // Lógica de preservação: Mantém a data original salva no objeto durante a edição
-      const group = getActiveGroup();
-      date = group.settlements[editing.settlementIndex].date;
-    } else {
-      from = document.getElementById('from').value;
-      to = document.getElementById('to').value;
-      value = +document.getElementById('amount').value;
-      const dateEl = document.getElementById('settlementDate');
-      date = (dateEl ? dateEl.value : null) || today();
-    }
-
-    processSettlement(from, to, value, date);
-  }
-
-  function processSettlement(from, to, value, date) {
-    const group = getActiveGroup();
-    if(!pied(from) || !pied(to) || !Number.isFinite(value) || value <= 0 || from === to) {
-      if(from === to) alert("Um morador não pode pagar para si mesmo.");
-      return;
-    }
-    if(editing.settlementIndex === null){
-      group.settlements.push({ from, to, value, date });
-    } else {
-      group.settlements[editing.settlementIndex] = { from, to, value, date };
-      editing.settlementIndex = null;
-    }
-    document.getElementById('amount').value = '';
-    const fEl = document.getElementById('from');
-    const tEl = document.getElementById('to');
-    if(fEl) fEl.value = ''; if(tEl) tEl.value = '';
-    save();
-  }
-
-  function startEditSettlement(index){
-    const group = getActiveGroup();
-    editing.settlementIndex = index;
-    const s = group.settlements[index];
-    const optFrom = group.residents.map(r => `<option value="${escapeHtml(r.name)}" ${r.name === s.from ? 'selected' : ''}>${escapeHtml(r.name)}</option>`).join('');
-    const optTo = group.residents.map(r => `<option value="${escapeHtml(r.name)}" ${r.name === s.to ? 'selected' : ''}>${escapeHtml(r.name)}</option>`).join('');
-    
-    const html = `
-      <div class="small">Quem paga</div><select id="modal_set_from">${optFrom}</select>
-      <div class="small">Quem recebe</div><select id="modal_set_to">${optTo}</select>
-      <input id="modal_set_val" type="number" value="${s.value}" placeholder="Valor" />
-      <div class="small">A data original (${formatDate(s.date)}) será mantida.</div>
-    `;
-    openModal("Editar Acerto", html, addOrSaveSettlement);
-  }
-
-  function removeSettlement(index){
-    const group = getActiveGroup();
-    if(!confirm('Remover acerto?')) return;
-    group.settlements.splice(index, 1);
-    if(editing.settlementIndex === index) editing.settlementIndex = null;
-    save();
-  }
-
-  // ---------------- CALC ----------------
-  function calculate(){
-    const group = getActiveGroup();
-    let paid = {};
-    let total = 0;
-
-    if(!group) return { total:0, avg:0 };
-
-    group.residents.forEach(r => paid[r.name] = 0);
-
-    group.expenses.forEach(e => {
-      paid[e.paidBy] += e.value;
-      total += e.value;
-    });
-
-    const avg = total / (group.residents.length || 1);
-
-    // ajuste de acertos (REGRA CORRIGIDA)
-    let adjust = {};
-    group.residents.forEach(r => adjust[r.name] = 0);
-
-    group.settlements.forEach(s => {
-      adjust[s.from] -= s.value;
-      adjust[s.to] += s.value;
-    });
-
-    let final = {};
-    group.residents.forEach(r => {
-      final[r.name] = (paid[r.name] || 0) - (adjust[r.name] || 0);
-    });
-
-    let diff = {};
-    group.residents.forEach(r => {
-      diff[r.name] = final[r.name] - avg;
-    });
-
-    return { total, avg, paid, final, diff };
-  }
-
-  function formatDate(d) {
-      if(!d) return '';
-      const [y, m, day] = d.split('-');
-      return `${day}/${m}`;
-  }
-
-  // ---------------- RENDER ----------------
-  function render(){
-    const group = getActiveGroup();
-    
-    // View Switching
-    if (!group) {
-      document.getElementById('viewGroups').classList.remove('hidden');
-      document.getElementById('viewDetail').classList.add('hidden');
-      document.getElementById('navBar').classList.add('hidden');
-      document.getElementById('mainHeader').textContent = "CONTAJUSTA";
-      renderGroupList();
-      return;
-    }
-
-    document.getElementById('viewGroups').classList.add('hidden');
-    document.getElementById('viewDetail').classList.remove('hidden');
-    document.getElementById('navBar').classList.remove('hidden');
-    document.getElementById('activeGroupName').textContent = group.name;
-
-    renderActiveGroup();
-  }
-
-  function renderGroupList() {
-    const list = document.getElementById('groupList');
-    if (state.groups.length === 0) {
-      list.innerHTML = '<div class="empty-state card">Você não possui grupos. Crie um para começar!</div>';
-      return;
-    }
-    list.innerHTML = state.groups.map((g, idx) => `
-      <div class="card group-card" onclick="selectGroup('${g.id}')">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-          <div>
-            <div class="title" style="font-size: 1.2rem">${escapeHtml(g.name)}</div>
-            <div class="small">${escapeHtml(g.description || 'Sem descrição')}</div>
-          </div>
-          <div class="list-actions">
-            <button class="icon secondary" onclick="startEditGroup(${idx}, event)">✏️</button>
-            <button class="icon danger" onclick="removeGroup(${idx}, event)">🗑️</button>
-          </div>
-        </div>
-        <div class="hr"></div>
-        <div class="small">Criado em: ${new Date(g.createdAt).toLocaleDateString()}</div>
-      </div>
-    `).join('');
-  }
-
-  function renderActiveGroup() {
-    const group = getActiveGroup();
-    updateExpenseSelectOptions();
-    const comparisonDiv = document.getElementById('monthlyComparison');
-    const c = calculate();
-
-    // KPIs
-    document.getElementById('kpiTotal').textContent = money(c.total);
-    document.getElementById('kpiAvg').textContent = money(c.avg);
-    document.getElementById('kpiResidents').textContent = group.residents.length;
-    document.getElementById('kpiExpensesCount').textContent = group.expenses.length;
-
-    // Trends
-    if (group.history && group.history.length > 0) {
-        const lastMonth = group.history[group.history.length - 1];
-        const diff = c.total - lastMonth.total;
-        const percent = lastMonth.total > 0 ? ((diff / lastMonth.total) * 100).toFixed(1) : 0;
-        const isEco = diff <= 0;
-        comparisonDiv.innerHTML = `
-          <div class="trend-indicator">
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <span>Mês Anterior (${lastMonth.date}): <b>${money(lastMonth.total)}</b></span>
-              <span>Mês Atual: <b>${money(c.total)}</b></span>
-            </div>
-            <div style="text-align: right;">
-              <span class="${isEco ? 'pos' : 'neg'}" style="font-weight: bold;">
-                ${isEco ? '↓ Econ.' : '↑ Aum.'} ${money(Math.abs(c.total - lastMonth.total))}
-              </span>
-              <div class="small">(${isEco ? '-' : '+'}${Math.abs(percent)}%)</div>
-            </div>
-          </div>`;
-    } else { comparisonDiv.innerHTML = ''; }
-
-    // Expenses
-    document.getElementById('expenses').innerHTML = group.expenses
-      .map((e, idx) => `
-        <div class="item">
-          <div class="meta" style="flex: 1">
-            <div class="title">${escapeHtml(e.desc)}</div>
-            <div class="badges">
-              <span class="badge" style="background: var(--surface-light)">📅 ${formatDate(e.date)}</span>
-              <span class="badge mono" style="color:var(--neg)">${money(e.value)}</span>
-              <span class="badge">Pago por: ${escapeHtml(e.paidBy)}</span>
-            </div>
-          </div>
-          <div class="list-actions">
-            <button class="icon secondary" title="Editar" onclick="startEditExpense(${idx})">✏️</button>
-            <button class="icon danger" title="Remover" onclick="removeExpense(${idx})">🗑️</button>
-          </div>
-        </div>
-      `).join('');
-
-    // Settlements
-    document.getElementById('settlements').innerHTML = group.settlements
-      .map((s, idx) => `
-        <div class="item">
-          <div class="meta" style="flex-grow: 1;">
-            <div class="title" style="color: var(--accent)">${escapeHtml(s.from)} <span style="color: var(--muted); font-weight: 400;">pagou para</span> ${escapeHtml(s.to)}</div>
-            <div class="badges">
-              <span class="badge" style="background: var(--surface-light)">📅 ${formatDate(s.date)}</span>
-              <span class="badge mono" style="color:var(--pos)">+ ${money(s.value)}</span>
-              <span class="badge">Acerto</span>
-            </div>
-          </div>
-          <div class="list-actions">
-            <button class="icon secondary" title="Editar" onclick="startEditSettlement(${idx})">✏️</button>
-            <button class="icon danger" title="Remover" onclick="removeSettlement(${idx})">🗑️</button>
-          </div>
-        </div>
-      `).join('');
-
-    // Summary
-    if(group.residents.length === 0){
-      document.getElementById('summary').innerHTML = 'Adicione moradores para começar.';
-      return;
-    }
-
-    let html = '';
-    html += `<div class="small">Gasto final + diferença vs média (meta)</div>`;
-    group.residents.forEach(r => {
-      const v = c.final[r.name] || 0;
-      const d = c.diff[r.name] || 0;
-      const isPos = d >= 0;
-      html += ` 
-        <div class="item">
-          <div style="flex: 1">
-            <div class="title">${escapeHtml(r.name)}</div>
-            <div class="badges">
-              <span class="badge">Final: <b class="mono">${money(v)}</b></span>
-              <span class="badge ${isPos ? 'pos' : 'neg'}">
-                ${isPos ? 'A receber' : 'A pagar'}: ${money(Math.abs(d))}
-              </span>
-            </div>
-          </div>
-          <div class="list-actions">
-            <button class="icon secondary" style="background: transparent; border: 1px solid var(--line);" title="Editar" onclick="startEditResident(${group.residents.findIndex(res => res.name === r.name)}, event)">✏️</button>
-            <button class="icon danger" style="background: transparent; border: 1px solid var(--line);" title="Remover" onclick="removeResident(${group.residents.findIndex(res => res.name === r.name)}, event)">🗑️</button>
-          </div>
-        </div>
-      `;
-    });
-    html += `<div class="hr"></div>`;
-    document.getElementById('summary').innerHTML = html;
-  }
-
-  // --- INITIAL ---
-  window.onload = () => {
-    render();
-  };
-</script>
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+
+  <script src="app-core.js"></script>
+  <script src="app-actions.js"></script>
 </body>
 </html>
+
+
+
