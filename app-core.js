@@ -233,6 +233,9 @@ function clearFirestoreListeners() {
   }
 }
 
+// Mapa simples para evitar listener duplicado para o mesmo groupId
+let lastSubscribedGroupId = null;
+
 function applyRemoteGroupSnapshot(groupId, data) {
   if (!groupId) return;
 
@@ -253,9 +256,17 @@ function applyRemoteGroupSnapshot(groupId, data) {
 }
 
 function subscribeToActiveGroup(groupId) {
-  clearFirestoreListeners();
+  // Evita múltiplos listeners para o mesmo documento.
+  if (!groupId) {
+    clearFirestoreListeners();
+    lastSubscribedGroupId = null;
+    return;
+  }
+  if (lastSubscribedGroupId === groupId && unsubscribeActiveGroup) return;
 
-  if (!groupId) return;
+  clearFirestoreListeners();
+  lastSubscribedGroupId = groupId;
+
   const fs = requireFirebaseFirestore();
   if (!fs) return;
 
