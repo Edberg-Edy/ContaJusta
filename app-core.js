@@ -66,6 +66,10 @@ async function save() {
   localStorage.setItem('contajusta_state', JSON.stringify(state));
   render();
 
+  // Não envie writes quando estamos aplicando snapshot remoto.
+  // Isso evita loops e mantém sincronização estável.
+  if (isApplyingRemoteSnapshot) return;
+
   // Sincronização Firestore: debounce simples para evitar tempestade de writes
   if (savePending) return;
   savePending = true;
@@ -126,8 +130,13 @@ function requireFirebaseFirestore() {
   // espera libs carregadas
   if (!firebaseApp) ensureFirebaseInitialized();
   if (typeof firebase === 'undefined') return null;
-  if (!firebase.firestore) return null;
-  return firebaseApp.firestore ? firebaseApp.firestore() : firebase.firestore();
+
+  // Compat: em alguns cenários firebaseApp.firestore() pode não existir,
+  // então sempre usamos firebase.firestore() quando disponível.
+  if (firebase.firestore) return firebase.firestore();
+  if (firebaseApp && firebaseApp.firestore) return firebaseApp.firestore();
+
+  return null;
 }
 
 async function loadStateFromFirestore() {
@@ -139,29 +148,21 @@ async function loadStateFromFirestore() {
   const fs = requireFirebaseFirestore();
   if (!fs) return;
 
-  // Documento único por grupo (durável e evita arrays gigantes)
-  // groups/{groupId} -> { name, description, createdAt, updatedAt }
-  // subcoleções: residents/expenses/settlements/history (vamos mapear mais adiante)
-  // Nesta fase, como o CRUD ainda opera em arrays locais, vamos gravar/ler um snapshot compacto.
-
   try {
     const snap = await fs.collection('groups').doc(gid).get();
     if (!snap.exists) return;
 
     const data = snap.data() || {};
 
-    // Só hidrata se estiver com o formato esperado.
-    // Mantém o app funcionando enquanto migramos o modelo.
-    // (Após estabilizar, trocamos para subcoleções de verdade.)
     const hydratedGroup = {
       id: gid,
       name: data.name || 'Grupo',
       description: data.description || '',
       createdAt: data.createdAt || new Date().toISOString(),
-      residents: data.residents || [],
-      expenses: data.expenses || [],
-      settlements: data.settlements || [],
-      history: data.history || []
+      residents: Array.isArray(data.residents) ? data.residents : [],
+      expenses: Array.isArray(data.expenses) ? data.expenses : [],
+      settlements: Array.isArray(data.settlements) ? data.settlements : [],
+      history: Array.isArray(data.history) ? data.history : []
     };
 
     // Atualiza state.groups mantendo as demais
@@ -170,6 +171,9 @@ async function loadStateFromFirestore() {
     else state.groups.push(hydratedGroup);
 
     render();
+
+    // Garante que o listener está ativo para refletir mudanças em outros dispositivos
+    try { subscribeToActiveGroup(gid); } catch (_) {}
   } catch (e) {
     console.error('loadStateFromFirestore error:', e);
   }
