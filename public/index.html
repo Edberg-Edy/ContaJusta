@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContaJusta - Login</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="container">
+    <div class="login-box">
+      <h1>ContaJusta</h1>
+      <p class="subtitle">Divisão de despesas em grupo, sem complicação.</p>
+
+      <form id="login-form">
+        <input type="email" id="email" placeholder="E-mail" required>
+        <input type="password" id="password" placeholder="Senha" required>
+        <button type="submit" id="btn-login">Entrar</button>
+      </form>
+
+      <button id="btn-show-register" class="link-button">
+        Não tem conta? Criar agora
+      </button>
+
+      <form id="register-form" class="hidden">
+        <input type="text" id="reg-name" placeholder="Seu nome" required>
+        <input type="email" id="reg-email" placeholder="E-mail" required>
+        <input type="password" id="reg-password" placeholder="Senha (mín. 6 caracteres)" required>
+        <button type="submit" id="btn-register">Criar conta</button>
+      </form>
+
+      <button id="btn-show-login" class="link-button hidden">
+        Já tem conta? Entrar
+      </button>
+
+      <p id="error-message" class="error hidden"></p>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

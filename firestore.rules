@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isGroupMember(groupId) {
+      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+    }
+
+    function isGroupOwner(groupId) {
+      return isSignedIn() && request.auth.uid == get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId;
+    }
+
+    // Usuários podem ler/editar apenas suas próprias contas
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Grupos
+    match /groups/{groupId} {
+      allow read: if isGroupMember(groupId);
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.members is list
+        && request.auth.uid in request.resource.data.members;
+
+      allow update: if isGroupOwner(groupId);
+      allow delete: if isGroupOwner(groupId);
+
+      match /members/{memberId} {
+        allow read: if isGroupMember(groupId);
+        allow create, update, delete: if isGroupOwner(groupId);
+      }
+
+      match /months/{monthId} {
+        allow read: if isGroupMember(groupId);
+        allow create: if isGroupMember(groupId) || isGroupOwner(groupId);
+        allow update: if isGroupMember(groupId) || isGroupOwner(groupId);
+
+        match /expenses/{expenseId} {
+          allow read: if isGroupMember(groupId);
+          allow create: if isGroupMember(groupId) || isGroupOwner(groupId);
+          allow update: if isGroupMember(groupId) || isGroupOwner(groupId);
+          allow delete: if isSignedIn() && (request.auth.uid == resource.data.createdBy || isGroupOwner(groupId));
+        }
+
+        match /settlements/{settlementId} {
+          allow read: if isGroupMember(groupId);
+          allow create: if isGroupMember(groupId) || isGroupOwner(groupId);
+          allow update: if isGroupMember(groupId) || isGroupOwner(groupId);
+          allow delete: if isSignedIn() && (request.auth.uid == resource.data.createdBy || isGroupOwner(groupId));
+        }
+      }
+
+      match /history/{historyId} {
+        allow read: if isGroupMember(groupId);
+      }
+    }
+  }
+}
