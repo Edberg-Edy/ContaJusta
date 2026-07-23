@@ -3,11 +3,10 @@
 
 import { db, auth } from "./firebase-config.js";
 import {
-  collection, doc, setDoc, getDoc, getDocs,
+  collection, doc, setDoc, getDoc, getDocs, deleteDoc,
   query, where, serverTimestamp, arrayUnion, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Gera um código de convite de 6 caracteres, sem letras/números ambíguos (0, O, 1, I)
 function generateInviteCode(length = 6) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -17,7 +16,6 @@ function generateInviteCode(length = 6) {
   return code;
 }
 
-// Cria um novo grupo. O criador já entra como dono (ownerId) e membro aprovado.
 export async function createGroup(name, type) {
   const user = auth.currentUser;
   const inviteCode = generateInviteCode();
@@ -26,7 +24,7 @@ export async function createGroup(name, type) {
 
   await setDoc(groupRef, {
     name: name,
-    type: type, // "permanente" ou "temporario"
+    type: type,
     inviteCode: inviteCode,
     ownerId: user.uid,
     members: [user.uid],
@@ -45,7 +43,6 @@ export async function createGroup(name, type) {
   return groupRef.id;
 }
 
-// Solicita entrada em um grupo existente através do código de convite (fica "pending")
 export async function requestToJoinGroup(inviteCode) {
   const user = auth.currentUser;
 
@@ -76,7 +73,6 @@ export async function requestToJoinGroup(inviteCode) {
   return groupDoc.data().name;
 }
 
-// Busca todos os grupos onde o usuário atual é membro aprovado (está no array "members" do grupo)
 export async function getMyGroups() {
   const user = auth.currentUser;
 
@@ -86,7 +82,6 @@ export async function getMyGroups() {
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// Aprova um membro pendente (só o dono do grupo pode chamar isso)
 export async function approveMember(groupId, uid) {
   await updateDoc(doc(db, "groups", groupId), {
     members: arrayUnion(uid)
@@ -94,4 +89,19 @@ export async function approveMember(groupId, uid) {
   await updateDoc(doc(db, "groups", groupId, "members", uid), {
     status: "approved"
   });
+}
+
+export async function rejectMember(groupId, uid) {
+  await deleteDoc(doc(db, "groups", groupId, "members", uid));
+}
+
+export async function getGroupDetails(groupId) {
+  const snap = await getDoc(doc(db, "groups", groupId));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() };
+}
+
+export async function getGroupMembers(groupId) {
+  const snap = await getDocs(collection(db, "groups", groupId, "members"));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }

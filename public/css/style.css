@@ -138,3 +138,58 @@ button[type="submit"]:hover {
 .hidden {
   display: none;
 }
+
+.section-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #999;
+  font-weight: 600;
+  margin: 20px 0 8px;
+}
+
+.invite-code {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-align: center;
+  background: #eef3fc;
+  border: 1px dashed #1a73e8;
+  border-radius: 8px;
+  padding: 10px;
+  color: #1a73e8;
+}
+
+.member-item {
+  padding: 10px 14px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.member-item.pending {
+  background: #fff8e1;
+  border-color: #ffe082;
+}
+
+.small-button {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.small-button.approve {
+  background: #188038;
+  color: white;
+}
+
+.small-button.reject {
+  background: #d93025;
+  color: white;
+}

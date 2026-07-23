@@ -8,30 +8,33 @@
 </head>
 <body>
   <div class="container">
-    <div class="login-box">
-      <h1 id="group-name">Carregando grupo...</h1>
-      <p class="subtitle">Esta tela será construída na próxima etapa (membros, despesas, acertos).</p>
-      <a href="dashboard.html" class="link-button" style="display:block; text-align:center;">← Voltar aos meus grupos</a>
+    <div class="login-box" id="loading-box">
+      <h1>ContaJusta</h1>
+      <p class="subtitle">Carregando grupo...</p>
     </div>
+
+    <div class="login-box hidden" id="group-box" style="max-width: 460px;">
+      <a href="dashboard.html" class="link-button" style="margin-top:0; text-align:left;">← Meus grupos</a>
+      <h1 id="group-name"></h1>
+      <p class="subtitle" id="group-type"></p>
+
+      <div id="invite-code-box" class="hidden">
+        <p class="section-label">Código de convite</p>
+        <p class="invite-code" id="invite-code"></p>
+      </div>
+
+      <div id="pending-box" class="hidden">
+        <p class="section-label">Solicitações pendentes</p>
+        <div id="pending-list"></div>
+      </div>
+
+      <p class="section-label">Membros</p>
+      <div id="members-list"></div>
+    </div>
+
+    <p id="error-message" class="error hidden"></p>
   </div>
 
-  <script type="module">
-    import { db } from "./js/firebase-config.js";
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const params = new URLSearchParams(window.location.search);
-    const groupId = params.get("id");
-
-    async function carregar() {
-      if (!groupId) {
-        document.getElementById("group-name").textContent = "Grupo não encontrado";
-        return;
-      }
-      const snap = await getDoc(doc(db, "groups", groupId));
-      document.getElementById("group-name").textContent = snap.exists() ? snap.data().name : "Grupo não encontrado";
-    }
-
-    carregar();
-  </script>
+  <script type="module" src="js/group.js"></script>
 </body>
 </html>
