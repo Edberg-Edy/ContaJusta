@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContaJusta - Grupo</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="login-box">
+      <h1 id="group-name">Carregando grupo...</h1>
+      <p class="subtitle">Esta tela será construída na próxima etapa (membros, despesas, acertos).</p>
+      <a href="dashboard.html" class="link-button" style="display:block; text-align:center;">← Voltar aos meus grupos</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from "./js/firebase-config.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const params = new URLSearchParams(window.location.search);
+    const groupId = params.get("id");
+
+    async function carregar() {
+      if (!groupId) {
+        document.getElementById("group-name").textContent = "Grupo não encontrado";
+        return;
+      }
+      const snap = await getDoc(doc(db, "groups", groupId));
+      document.getElementById("group-name").textContent = snap.exists() ? snap.data().name : "Grupo não encontrado";
+    }
+
+    carregar();
+  </script>
+</body>
+</html>

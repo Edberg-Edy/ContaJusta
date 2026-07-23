@@ -46,14 +46,15 @@ form {
   gap: 12px;
 }
 
-input {
+input, select {
   padding: 12px 14px;
   border: 1px solid #dcdcdc;
   border-radius: 8px;
   font-size: 14px;
+  width: 100%;
 }
 
-input:focus {
+input:focus, select:focus {
   outline: none;
   border-color: #1a73e8;
 }
@@ -74,6 +75,41 @@ button[type="submit"]:hover {
   background: #1558b0;
 }
 
+.primary-button {
+  background: #1a73e8;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.primary-button:hover {
+  background: #1558b0;
+}
+
+.group-item-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.group-item-button:hover {
+  background: #eef3fc;
+  border-color: #1a73e8;
+}
+
 .link-button {
   background: none;
   border: none;
@@ -87,6 +123,13 @@ button[type="submit"]:hover {
 
 .error {
   color: #d93025;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 12px;
+}
+
+.success {
+  color: #188038;
   font-size: 13px;
   text-align: center;
   margin-top: 12px;

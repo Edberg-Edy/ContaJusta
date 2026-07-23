@@ -21,7 +21,7 @@ service cloud.firestore {
 
     // Grupos
     match /groups/{groupId} {
-      allow read: if isGroupMember(groupId);
+      allow read: if isSignedIn() && request.auth.uid in resource.data.members;
 
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
@@ -33,7 +33,9 @@ service cloud.firestore {
 
       match /members/{memberId} {
         allow read: if isGroupMember(groupId);
-        allow create, update, delete: if isGroupOwner(groupId);
+        allow create: if isGroupOwner(groupId)
+          || (isSignedIn() && request.auth.uid == memberId && request.resource.data.status == "pending");
+        allow update, delete: if isGroupOwner(groupId);
       }
 
       match /months/{monthId} {

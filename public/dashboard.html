@@ -3,35 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ContaJusta - Dashboard</title>
+  <title>ContaJusta - Meus Grupos</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="container">
-    <div class="login-box">
+
+    <div class="login-box" id="loading-box">
       <h1>ContaJusta</h1>
-      <p class="subtitle">Login funcionando! 🎉</p>
-      <p id="user-name" style="text-align:center; margin-bottom:16px;"></p>
-      <button id="btn-logout" type="button">Sair</button>
+      <p class="subtitle">Carregando seus grupos...</p>
     </div>
+
+    <div class="login-box hidden" id="groups-list-box">
+      <h1>ContaJusta</h1>
+      <p class="subtitle" id="welcome-msg"></p>
+      <div id="groups-list"></div>
+      <button id="btn-show-create-from-list" class="primary-button">+ Criar novo grupo</button>
+      <button id="btn-show-join-from-list" class="link-button">Entrar com código de convite</button>
+      <button id="btn-logout-list" class="link-button">Sair</button>
+    </div>
+
+    <div class="login-box hidden" id="empty-box">
+      <h1>ContaJusta</h1>
+      <p class="subtitle" id="welcome-msg-empty"></p>
+      <p class="subtitle">Você ainda não faz parte de nenhum grupo.</p>
+      <button id="btn-show-create" class="primary-button" type="button">Criar meu primeiro grupo</button>
+      <button id="btn-show-join" class="link-button">Já tenho um código de convite</button>
+      <button id="btn-logout-empty" class="link-button">Sair</button>
+    </div>
+
+    <div class="login-box hidden" id="create-box">
+      <h1>Criar Grupo</h1>
+      <form id="create-form">
+        <input type="text" id="group-name" placeholder="Nome do grupo" required>
+        <select id="group-type">
+          <option value="permanente">Permanente (fecha todo mês)</option>
+          <option value="temporario">Temporário (ciclo único)</option>
+        </select>
+        <button type="submit">Criar grupo</button>
+      </form>
+      <button id="btn-cancel-create" class="link-button">Cancelar</button>
+    </div>
+
+    <div class="login-box hidden" id="join-box">
+      <h1>Entrar em um Grupo</h1>
+      <form id="join-form">
+        <input type="text" id="invite-code" placeholder="Código de convite" required maxlength="6">
+        <button type="submit">Solicitar entrada</button>
+      </form>
+      <button id="btn-cancel-join" class="link-button">Cancelar</button>
+      <p id="join-success" class="success hidden"></p>
+    </div>
+
+    <p id="error-message" class="error hidden"></p>
   </div>
 
-  <script type="module">
-    import { auth } from "./js/firebase-config.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { logoutUser } from "./js/auth.js";
-
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-      } else {
-        document.getElementById("user-name").textContent = "Bem-vindo(a), " + user.displayName;
-      }
-    });
-
-    document.getElementById("btn-logout").addEventListener("click", async () => {
-      await logoutUser();
-    });
-  </script>
+  <script type="module" src="js/dashboard.js"></script>
 </body>
 </html>
